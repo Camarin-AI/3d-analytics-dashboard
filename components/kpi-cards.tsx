@@ -1,7 +1,10 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { ArrowUp, ArrowDown } from "lucide-react"
-import { motion } from "framer-motion"
+
+// load ApexCharts only on the client
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
 export function KpiCards() {
   const kpis = [
@@ -10,131 +13,131 @@ export function KpiCards() {
       value: "54,081",
       change: 2,
       trend: "up",
-      sparkline: generateSparklineData(30, "up", 0.4),
+      data: generateSparklineData(30, 0.4),
     },
     {
       title: "Conversions",
       value: "68%",
       change: 6,
       trend: "up",
-      sparkline: generateSparklineData(30, "up", 0.6),
+      data: generateSparklineData(30, 0.6),
     },
     {
       title: "Bounce Rate",
       value: "36%",
       change: 6,
       trend: "down",
-      sparkline: generateSparklineData(30, "down", 0.6),
+      data: generateSparklineData(30, 0.6),
     },
     {
       title: "Visit Duration",
       value: "1m 2s",
       change: 6,
       trend: "up",
-      sparkline: generateSparklineData(30, "up", 0.5),
+      data: generateSparklineData(30, 0.5),
     },
-  ] as const;
+  ] as const
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8">
-      {kpis.map((kpi, index) => (
-        <KpiCard key={index} kpi={kpi} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+      {kpis.map((kpi, i) => (
+        <KpiCard key={i} {...kpi} />
       ))}
     </div>
   )
 }
 
 interface KpiCardProps {
-  kpi: {
-    title: string
-    value: string
-    change: number
-    trend: "up" | "down"
-    sparkline: number[]
-  }
+  title: string
+  value: string
+  change: number
+  trend: "up" | "down"
+  data: number[]
 }
 
-function KpiCard({ kpi }: KpiCardProps) {
-  const trendColor = kpi.trend === "up" ? "text-green-400" : "text-red-400"
-  const trendBg = kpi.trend === "up" ? "bg-[#10B981]/10" : "bg-[#F43F5E]/10"
+function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
+  const isUp = trend === "up"
+  const ArrowIcon = isUp ? ArrowUp : ArrowDown
+  const badgeTextColor = isUp ? "text-green-400" : "text-red-400"
+  const badgeBg = isUp ? "bg-green-500/10" : "bg-red-500/10"
 
   return (
-    <div className="bg-[#1C1C1C] rounded-lg p-5 flex flex-col border border-[#2A2A2A]">
-      <div className="flex justify-between items-start mb-3">
-        <p className="text-sm text-gray-400">{kpi.title}</p>
-        <div className={`flex items-center gap-1 text-xs font-medium ${trendColor} px-2 py-1 rounded-md ${trendBg}`}>
-          {kpi.trend === "up" ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-          {kpi.change}%<span className="text-[11px] text-gray-500 ml-1">last week</span>
-        </div>
+    <div className="relative bg-[#1C1C1C] border border-[#2A2A2A] rounded-lg p-5 flex items-center overflow-hidden">
+      {/* Left: Title & Value */}
+      <div className="flex-shrink-0 min-w-0">
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-3xl font-medium">{value}</p>
       </div>
 
-      <p className="text-3xl font-medium mb-3">{kpi.value}</p>
+      {/* Middle: Sparkline */}
+      <div className="w-24 flex-shrink-0 mx-4 overflow-hidden">
+        <SparklineChart data={data} trend={trend} />
+      </div>
 
-      <div className="h-12 mt-auto">
-        <SparklineChart data={kpi.sparkline} trend={kpi.trend} />
+      {/* Right: Badge */}
+      <div className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md ${badgeTextColor} ${badgeBg}`}>
+        <ArrowIcon size={12} />
+        {change}%
+        <span className="text-[11px] text-gray-500">last week</span>
       </div>
     </div>
   )
 }
 
 function SparklineChart({ data, trend }: { data: number[]; trend: "up" | "down" }) {
-  const color = trend === "up" ? "#10B981" : "#F43F5E"
-  const gradientId = `sparkline-gradient-${trend}`
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
+  const isUp = trend === "up"
+  // purple for up, red for down
+  const primary = isUp ? "#7C3AED" : "#EF4444"
+  const secondary = isUp ? "#D8B4FE" : "#FECACA"
 
-  const points = data.map((d, i) => [
-    (i / (data.length - 1)) * 100,
-    30 - ((d - min) / range) * 30
-  ]);
-
-  const linePathData = `M ${points[0][0]},${points[0][1]} ${points.slice(1).map(p => `L ${p[0]},${p[1]}`).join(" ")}`;
-
-  const areaPathData = `${linePathData} L ${points[points.length-1][0]},30 L ${points[0][0]},30 Z`;
+  const options: ApexCharts.ApexOptions = {
+    chart: {
+      type: "area",
+      sparkline: { enabled: true },
+      animations: { enabled: false },
+    },
+    stroke: {
+      curve: "smooth",
+      width: 2,
+    },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shade: "dark",
+        gradientToColors: [secondary],
+        opacityFrom: 0.4,
+        opacityTo: 0.05,
+        stops: [0, 100],
+      },
+    },
+    colors: [primary],
+    xaxis: {
+      labels: { show: false },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: { show: false },
+    tooltip: { enabled: false },
+  }
 
   return (
-    <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <motion.path
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
-        d={areaPathData}
-        fill={`url(#${gradientId})`}
-        stroke="none"
-      />
-      <motion.path
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
-        d={linePathData}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Chart
+      options={options}
+      series={[{ data }]}
+      type="area"
+      height={50}
+      width="100%"
+    />
   )
 }
 
-function generateSparklineData(length: number, trend: "up" | "down", volatility: number = 0.5) {
-  const data = []
-  let value = 50
-  const trendFactor = trend === "up" ? 0.5 : -0.5
-
-  for (let i = 0; i < length; i++) {
-    const randomChange = (Math.random() - 0.5) * 10 * volatility
-    value += trendFactor + randomChange
-    value = Math.max(10, Math.min(90, value))
-    data.push(value)
+function generateSparklineData(points: number, volatility: number) {
+  let v = 50
+  const out: number[] = []
+  for (let i = 0; i < points; i++) {
+    v += (Math.random() - 0.5) * volatility * 20
+    v = Math.max(0, Math.min(100, v))
+    out.push(v)
   }
-
-  return data
+  return out
 }
