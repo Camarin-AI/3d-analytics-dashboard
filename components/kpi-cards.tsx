@@ -1,10 +1,8 @@
-"use client"
+"use client";
 
-import dynamic from "next/dynamic"
-import { ArrowUp, ArrowDown } from "lucide-react"
+import dynamic from "next/dynamic";
 
-// load ApexCharts only on the client
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false })
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export function KpiCards() {
   const kpis = [
@@ -12,83 +10,56 @@ export function KpiCards() {
       title: "Total Visits",
       value: "54,081",
       change: 2,
-      trend: "up",
+      trend: "up" as const,
       data: generateSparklineData(30, 0.4),
     },
     {
       title: "Conversions",
       value: "68%",
       change: 6,
-      trend: "up",
+      trend: "up" as const,
       data: generateSparklineData(30, 0.6),
     },
     {
       title: "Bounce Rate",
       value: "36%",
       change: 6,
-      trend: "down",
+      trend: "down" as const,
       data: generateSparklineData(30, 0.6),
     },
     {
       title: "Visit Duration",
       value: "1m 2s",
       change: 6,
-      trend: "up",
+      trend: "up" as const,
       data: generateSparklineData(30, 0.5),
     },
-  ] as const
+  ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-      {kpis.map((kpi, i) => (
-        <KpiCard key={i} {...kpi} />
+    // tighter gap between cards
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-8">
+      {kpis.map((kpi, idx) => (
+        <KpiCard key={idx} {...kpi} />
       ))}
     </div>
-  )
+  );
 }
 
 interface KpiCardProps {
-  title: string
-  value: string
-  change: number
-  trend: "up" | "down"
-  data: number[]
+  title: string;
+  value: string;
+  change: number;
+  trend: "up" | "down";
+  data: number[];
 }
 
 function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
-  const isUp = trend === "up"
-  const ArrowIcon = isUp ? ArrowUp : ArrowDown
-  const badgeTextColor = isUp ? "text-green-400" : "text-red-400"
-  const badgeBg = isUp ? "bg-green-500/10" : "bg-red-500/10"
+  const isUp = trend === "up";
 
-  return (
-    <div className="relative bg-[#1C1C1C] border border-[#2A2A2A] rounded-lg p-5 flex items-center overflow-hidden">
-      {/* Left: Title & Value */}
-      <div className="flex-shrink-0 min-w-0">
-        <p className="text-sm text-gray-400">{title}</p>
-        <p className="text-3xl font-medium">{value}</p>
-      </div>
-
-      {/* Middle: Sparkline */}
-      <div className="w-24 flex-shrink-0 mx-4 overflow-hidden">
-        <SparklineChart data={data} trend={trend} />
-      </div>
-
-      {/* Right: Badge */}
-      <div className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md ${badgeTextColor} ${badgeBg}`}>
-        <ArrowIcon size={12} />
-        {change}%
-        <span className="text-[11px] text-gray-500">last week</span>
-      </div>
-    </div>
-  )
-}
-
-function SparklineChart({ data, trend }: { data: number[]; trend: "up" | "down" }) {
-  const isUp = trend === "up"
-  // purple for up, red for down
-  const primary = isUp ? "#7C3AED" : "#EF4444"
-  const secondary = isUp ? "#D8B4FE" : "#FECACA"
+  // colors from mock
+  const lineColor = isUp ? "#C0AFE2" : "#EF4444";
+  const fillToColor = isUp ? "#D8B4FE" : "#FECACA";
 
   const options: ApexCharts.ApexOptions = {
     chart: {
@@ -98,19 +69,19 @@ function SparklineChart({ data, trend }: { data: number[]; trend: "up" | "down" 
     },
     stroke: {
       curve: "smooth",
-      width: 2,
+      width: 3,
+      colors: [lineColor],
     },
     fill: {
       type: "gradient",
       gradient: {
         shade: "dark",
-        gradientToColors: [secondary],
-        opacityFrom: 0.4,
-        opacityTo: 0.05,
+        gradientToColors: [fillToColor],
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
         stops: [0, 100],
       },
     },
-    colors: [primary],
     xaxis: {
       labels: { show: false },
       axisBorder: { show: false },
@@ -118,26 +89,61 @@ function SparklineChart({ data, trend }: { data: number[]; trend: "up" | "down" 
     },
     yaxis: { show: false },
     tooltip: { enabled: false },
-  }
+  };
 
   return (
-    <Chart
-      options={options}
-      series={[{ data }]}
-      type="area"
-      height={50}
-      width="100%"
-    />
-  )
+    <div
+      className="
+        flex items-center justify-between
+        bg-[#1C1C1C] rounded-lg p-6 overflow-hidden
+      "
+      // very subtle border so cards read as one piece
+      style={{ border: "1px solid rgba(42,42,42,0.2)" }}
+    >
+      {/* Left: title + value */}
+      <div>
+        <p className="text-xs font-medium text-gray-300">{title}</p>
+        <p className="mt-1 text-3xl font-semibold text-white">
+          {value}
+        </p>
+      </div>
+
+      {/* Right: sparkline + overlay */}
+      <div className="relative w-24 h-12 flex-shrink-0">
+        <Chart
+          options={options}
+          series={[{ data }]}
+          type="area"
+          width="100%"
+          height={48}
+        />
+
+        {/* center-top overlay */}
+        <div className="absolute inset-0 flex flex-col items-center pt-1 pointer-events-none">
+          {/* inline SVG triangle */}
+          <svg width="10" height="8" viewBox="0 0 10 8" className="mb-0.5">
+            <polygon
+              points="5,0 0,8 10,8"
+              fill={isUp ? "#22C55E" : "#EF4444"}
+            />
+          </svg>
+          <span className="text-lg font-semibold text-white">{change}%</span>
+          <span className="mt-0.5 text-[10px] text-gray-400 uppercase tracking-wide">
+            last week
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function generateSparklineData(points: number, volatility: number) {
-  let v = 50
-  const out: number[] = []
+  let v = 50;
+  const out: number[] = [];
   for (let i = 0; i < points; i++) {
-    v += (Math.random() - 0.5) * volatility * 20
-    v = Math.max(0, Math.min(100, v))
-    out.push(v)
+    v += (Math.random() - 0.5) * volatility * 20;
+    v = Math.max(0, Math.min(100, v));
+    out.push(v);
   }
-  return out
+  return out;
 }
