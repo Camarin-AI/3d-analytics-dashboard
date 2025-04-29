@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -120,15 +121,15 @@ function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
 
         {/* center-top overlay */}
         <div className="absolute inset-0 flex flex-col items-center pt-1 pointer-events-none">
-          {/* inline SVG triangle */}
-          <svg width="10" height="8" viewBox="0 0 10 8" className="mb-0.5">
-            <polygon
-              points="5,0 0,8 10,8"
-              fill={isUp ? "#22C55E" : "#EF4444"}
-            />
-          </svg>
-          <span className="text-lg font-semibold text-white">{change}%</span>
-          <span className="mt-0.5 text-[10px] text-gray-400 uppercase tracking-wide">
+          <div className="flex items-center gap-0">
+            {isUp ? (
+              <Image src="/upArrow.png" alt="Up" width={16} height={10} />
+            ) : (
+              <Image src="/downArrow.png" alt="Down" width={16} height={10} />
+            )}
+            <span className="text-lg font-semibold text-white">{change}%</span>
+          </div>
+          <span className="mt-0.5 text-[10px] text-gray-400 tracking-wide">
             last week
           </span>
         </div>
