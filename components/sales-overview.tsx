@@ -6,18 +6,23 @@ import { MoreHorizontal } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-// dynamically import so SSR doesn't break
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false })
 
-// ordering bottom→middle→top
-const keys = ['social', 'redirect', 'direct'] as const
-type Source = typeof keys[number]
+// Data keys and labels
+const KEYS = ["social", "redirect", "direct"] as const
+type Key = typeof KEYS[number]
 
-function formatK(num: number): string {
-  return num >= 1000 ? `${(num/1000).toFixed(0)}k` : `${num}`
+const COLORS: Record<Key, string> = {
+  social: "#6D28D9",
+  redirect: "#7DD3FC",
+  direct: "#3B82F6",
+}
+const LABELS: Record<Key, string> = {
+  social: "Social Media",
+  redirect: "Redirect Links",
+  direct: "Direct Login",
 }
 
-// sample
 const rawData = [
   { name: '1', social: 34000, redirect: 12000, direct: 10000 },
   { name: '2', social: 28000, redirect: 11000, direct: 8000 },
@@ -28,154 +33,105 @@ const rawData = [
   { name: '7', social: 32000, redirect: 12000, direct: 11000 },
 ]
 
+function fmtK(n: number) {
+  return n >= 1000 ? `${(n / 1000).toFixed(0)}k` : `${n}`
+}
+
 export function SalesOverview() {
-  const [activeSource, setActiveSource] = useState<Source | null>(null)
+  const [active, setActive] = useState<Key | null>(null)
 
-  const categories   = rawData.map(d => d.name)
-  const socialData   = rawData.map(d => -d.social)
-  const redirectData = rawData.map(d => d.redirect)
-  const directData   = rawData.map(d => d.direct)
+  // prepare series data
+  const categories = rawData.map(d => d.name)
+  const seriesData = useMemo(() => KEYS.map(key => rawData.map(d => key === 'social' ? -d[key] : d[key])), [])
 
-  const colorMap = {
-    social:   "#6D28D9",
-    redirect: "#7DD3FC",
-    direct:   "#3B82F6",
-  } as const
-
-  const labelMap = {
-    social:   "Social Media",
-    redirect: "Redirect Links",
-    direct:   "Direct Login",
-  } as const
-
-  const option = useMemo(() => {
-    return {
-      backgroundColor: "transparent",
-      grid: { left: 50, right: 50, top: 50, bottom: 80 },
-      xAxis: {
-        type: "category",
-        data: categories,
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-      },
-      yAxis: {
-        type: "value",
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        splitLine: { show: false },
-      },
-      series: keys.map((k) => {
-        const data = k === "social" ? socialData
-                   : k === "redirect" ? redirectData
-                   : directData
-
-        const isActive = !activeSource || activeSource === k
-
-        return {
-          name: labelMap[k],
-          type: "line",
-          smooth: true,
-          stack: k === "social" ? "neg" : "pos",
-          data,
-          lineStyle: { opacity: isActive ? 1 : 0.2 },
-          areaStyle: { opacity: isActive ? 0.7 : 0.1 },
-          showSymbol: true,
-          symbolSize: 4,
-          itemStyle: { opacity: isActive ? 1 : 0.2 },
-          color: colorMap[k],
-        }
-      }),
-      markLine: {
-        symbol: "none",
-        lineStyle: { color: "#555", width: 1 },
-        data: [
-          { xAxis: categories[Math.floor(categories.length/3)] },
-          { xAxis: categories[Math.floor(2*categories.length/3)] },
-        ]
-      },
-      graphic: [
-        {
-          type: "text",
-          left: "33%",
-          bottom: 20,
-          style: { text: "Lead to Opportunity Conversion", fill: "#777", fontSize: 12, align: "center" }
-        },
-        {
-          type: "text",
-          left: "66%",
-          bottom: 20,
-          style: { text: "Opportunity to Win Conversion", fill: "#777", fontSize: 12, align: "center" }
-        }
-      ],
-      tooltip: {
-        trigger: "item",
-        formatter: (p: any) => {
-          const val = Math.abs(p.value as number)
-          return `<div style="color:white;padding:4px">
-            <strong>${p.seriesName}</strong><br/>${p.name}: ${val.toLocaleString()}
-          </div>`
-        },
-        backgroundColor: "rgba(42,42,42,0.9)",
-        textStyle: { color: "#fff" }
-      },
-    }
-  }, [categories, socialData, redirectData, directData, activeSource])
+  const option = useMemo(() => ({
+    backgroundColor: 'transparent',
+    grid: { left: 60, right: 60, top: 60, bottom: 80 },
+    xAxis: { type: 'category', data: categories, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, axisLabel: { show: false }, splitLine: { show: false } },
+    series: KEYS.map((k, i) => {
+      const isActive = !active || active === k
+      return {
+        name: LABELS[k],
+        type: 'line', smooth: true, stack: k === 'social' ? 'neg' : 'pos',
+        data: seriesData[i],
+        lineStyle: { width: 0, opacity: isActive ? 1 : 0.2 },
+        areaStyle: { color: COLORS[k], opacity: isActive ? 0.8 : 0.1 },
+        showSymbol: false,
+      }
+    }),
+    markLine: {
+      symbol: 'none', lineStyle: { color: '#fff', width: 2 },
+      data: [
+        { xAxis: categories[Math.floor(categories.length/3)] },
+        { xAxis: categories[Math.floor(2*categories.length/3)] }
+      ]
+    },
+    graphic: [
+      { type: 'text', left: '40%', bottom: 40, style: { text: 'Lead to Opportunity Conversion', fill: '#9CA3AF', fontSize: 12, fontFamily: 'Inter, sans-serif', align: 'center' } },
+      { type: 'text', left: '70%', bottom: 40, style: { text: 'Opportunity to Win Conversion', fill: '#9CA3AF', fontSize: 12, fontFamily: 'Inter, sans-serif', align: 'center' } }
+    ],
+    tooltip: { trigger: 'item', backgroundColor: 'rgba(0,0,0,0.7)', textStyle: { color: '#fff' }, formatter: (p: any) => {
+      const v = Math.abs(p.value)
+      return `<div style="padding:4px;color:#fff"><strong>${p.seriesName}</strong><br/>${p.name}: ${v.toLocaleString()}</div>`
+    } },
+  }), [active, categories, seriesData])
 
   return (
-    <Card className="bg-[#1A1A1A] border border-[#3C3C3C] rounded-xl text-white overflow-hidden">
-      <CardHeader className="flex items-center justify-between px-6 pt-4 pb-2">
+    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">Sales Overview</CardTitle>
-        <button className="text-gray-500 hover:text-white">
+        <button className="text-gray-400 hover:text-white">
           <MoreHorizontal size={20} />
         </button>
       </CardHeader>
 
-      <CardContent className="relative p-0 h-[320px]">
-        {/* KPI Overlay */}
-        <div className="absolute inset-0 z-10 flex items-start justify-around px-8 pt-8 pointer-events-none">
-          <div className="flex flex-col items-center w-1/2 text-center pr-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold">64%</span>
-              <span className="text-sm text-gray-400">+8% over last week</span>
-            </div>
-          </div>
-          <div className="flex flex-col items-center w-1/2 text-center pl-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold">18%</span>
-              <span className="text-sm text-gray-400">+2% over last week</span>
-            </div>
-          </div>
+      <CardContent className="relative p-0 h-[340px]">
+        {/* Separator lines */}
+        <div className="absolute inset-y-0 left-[33.33%] w-[2px] bg-white/40" />
+        <div className="absolute inset-y-0 left-[66.66%] w-[2px] bg-white/40" />
+
+        {/* Value badges */}
+        <div className="absolute top-[25%] left-10 flex flex-col space-y-6 z-10">
+          <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">{fmtK(rawData[0].direct)}</span>
+          <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">{fmtK(rawData[0].redirect)}</span>
+          <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">{fmtK(rawData[0].social)}</span>
         </div>
 
-        {/* Left Badges */}
-        <div className="absolute top-[15%] left-8 z-10">
-          <div className="text-xs bg-[#3B82F6] text-white px-2 py-0.5 rounded mb-1">{formatK(rawData[0].direct)}</div>
-          <div className="text-xs bg-[#7DD3FC] text-gray-900 px-2 py-0.5 rounded mb-1">{formatK(rawData[0].redirect)}</div>
-          <div className="text-xs bg-[#6D28D9] text-white px-2 py-0.5 rounded">{formatK(rawData[0].social)}</div>
+        {/* KPIs */}
+    <div className="absolute top-[5%] left-1/3 w-[33.33%] text-center z-10">
+      <div className="flex justify-center items-center space-x-2">
+        <div className="text-3xl font-semibold">64%</div>
+        <div className="text-left">
+          <div className="text-sm font-medium text-green-400">+8%</div>
+          <div className="text-xs text-[#9CA3AF]">over last week</div>
         </div>
+      </div>
+    </div>
+        
+    <div className="absolute top-[5%] left-[66.66%] w-[33.33%] text-center z-10">
+  <div className="flex justify-center items-center space-x-2">
+    <div className="text-3xl font-semibold">18%</div>
+    <div className="text-left">
+      <div className="text-sm font-medium text-green-400">+2%</div>
+      <div className="text-xs text-[#9CA3AF]">over last week</div>
+    </div>
+  </div>
+</div>
 
-        {/* Chart */}
+      
+
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="h-full">
-          <ReactECharts option={option} style={{ width: "100%", height: "100%" }} />
+          <ReactECharts option={option} style={{ width: '100%', height: '100%' }} />
         </motion.div>
       </CardContent>
 
-      {/* Custom Legend / Buttons */}
+      {/* Legend */}
       <div className="flex items-center justify-center gap-8 p-4 border-t border-[#3C3C3C]">
-        {keys.map((k) => (
-          <button
-            key={k}
-            onClick={() => setActiveSource(prev => prev === k ? null : k)}
-            className={`flex items-center gap-2 text-sm transition-opacity ${
-              !activeSource || activeSource === k
-                ? "opacity-100"
-                : "opacity-30 hover:opacity-60"
-            }`}
-          >
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colorMap[k] }} />
-            {labelMap[k]}
+        {KEYS.map(k => (
+          <button key={k} onClick={() => setActive(prev => prev === k ? null : k)} className={`flex items-center gap-2 text-sm transition-opacity ${!active || active === k ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}>
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[k] }} />
+            <span>{LABELS[k]}</span>
           </button>
         ))}
       </div>
