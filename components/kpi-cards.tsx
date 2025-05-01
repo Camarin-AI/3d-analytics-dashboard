@@ -39,7 +39,7 @@ export function KpiCards() {
 
   return (
     // tighter gap between cards
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
       {kpis.map((kpi, idx) => (
         <KpiCard key={idx} {...kpi} />
       ))}
@@ -96,15 +96,16 @@ function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
     <div
       className="
         flex items-center justify-between
-        bg-[#1C1C1C] rounded-lg p-6 overflow-hidden
+        bg-[#121212] rounded p-6 overflow-hidden
+        border-black
       "
       // very subtle border so cards read as one piece
-      style={{ border: "1px solid rgba(42,42,42,0.2)" }}
+      // style={{ border: "0.5px solid rgba(28, 27, 27, 0.2)" }}
     >
       {/* Left: title + value */}
       <div>
-        <p className="text-xs font-medium text-gray-300">{title}</p>
-        <p className="mt-1 text-3xl font-semibold text-white">
+        <p className="text-xs font-light text-gray-300">{title}</p>
+        <p className="mt-1 text-3xl font-light text-white">
           {value}
         </p>
       </div>
@@ -123,9 +124,9 @@ function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
         <div className="absolute inset-0 flex flex-col items-center pt-1 pointer-events-none">
           <div className="flex items-center gap-0">
             {isUp ? (
-              <Image src="/upArrow.png" alt="Up" width={16} height={10} />
+              <Image src="/upArrow.png" alt="Up" width={12} height={12} />
             ) : (
-              <Image src="/downArrow.png" alt="Down" width={16} height={10} />
+              <Image src="/downArrow.png" alt="Down" width={12} height={12} />
             )}
             <span className="text-lg font-semibold text-white">{change}%</span>
           </div>

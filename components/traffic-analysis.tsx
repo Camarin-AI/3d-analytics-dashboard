@@ -59,9 +59,9 @@ export function TrafficAnalysis() {
   const pieData = activeSeg ? base.filter((d) => d.name === activeSeg) : base
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
+    <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
     <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-lg font-medium">Traffic Analysis</CardTitle>
+      <CardTitle className="text-xl font-light font-sans">Traffic Analysis</CardTitle>
       <button className="text-gray-400 hover:text-white">
         <MoreHorizontal size={20} />
       </button>
@@ -69,7 +69,7 @@ export function TrafficAnalysis() {
 
       <CardContent className="pt-2 px-4">
         {/* Top radio toggles */}
-        <div className="flex items-center justify-center gap-6 mb-4">
+        <div className="flex items-center justify-center gap-6 mb-4 font-sans font-light">
           {[
             { key: "device", label: "By Device" },
             { key: "browser", label: "By Browser" },

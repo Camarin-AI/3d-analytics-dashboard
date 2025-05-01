@@ -24,7 +24,7 @@ export function SalesAnalytics() {
       <main className="flex-1 p-8">
         <Header />
         <div className="flex items-center justify-between mt-6 mb-8">
-          <h1 className="text-4xl font-medium">Sales Analytics</h1>
+          <h1 className="text-4xl font-light font-sans text-white">Sales Analytics</h1>
           <DateRangePicker date={dateRange} onDateChange={setDateRange} />
         </div>
 
@@ -38,7 +38,7 @@ export function SalesAnalytics() {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-2xl font-medium mb-4">Comparative Analysis</h2>
+          <h2 className="text-2xl font-light font-sans text-white mb-4">Comparative Analysis</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ReturnRates />
             <ConversionRates />

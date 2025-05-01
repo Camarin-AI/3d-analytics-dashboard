@@ -1,75 +1,229 @@
-"use client"
+"use client";
 
-import { MoreHorizontal, ArrowDown, ArrowUp } from "lucide-react"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
+import { MoreHorizontal, ArrowDown, ArrowUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Define data for both sources, matching visual rings
+const data = {
+  without: { // Outer Ring Data
+    rate: 71,
+    trend: "down",
+  },
+  with: { // Inner Ring Data
+    rate: 45, // Example data for the inner ring
+    trend: "up", // Example trend for inner ring
+  },
+};
+
+// Define colors based on activity state
+const colors = {
+  background: "#161618",
+  cardBorder: "rgba(255, 255, 255, 0.4)", // Adjusted border opacity based on image
+  textPrimary: "#FFFFFF",
+  textSecondary: "#A1A1AA",
+  textMuted: "#71717A",
+  iconMuted: "#6B7280",
+  // --- Dynamic Ring/Track Colors ---
+  progressActive: "#14B8A6",      // Bright teal for the active progress arc
+  progressInactive: "#095C56",    // Darker, less saturated teal for inactive arc (adjust as needed)
+                                   // Alt: use opacity: "rgba(20, 184, 166, 0.3)"
+  trackActive: "rgba(20, 184, 166, 0.2)", // Visible track for the active ring
+  trackInactive: "rgba(20, 184, 166, 0.05)", // Very faint track for the inactive ring
+  // --- Other Colors ---
+  trendDown: "#F87171",
+  trendUp: "#34D399",
+  legendActiveHighlight: "#14B8A6", // Color for the active legend circle's border
+  legendInactiveCircle: "#6B7280", // Background color for inactive legend circle
+  legendInactiveText: "#6B7280",
+};
+
+// SVG Circle properties
+const outerRadius = 42;
+const innerRadius = 30;
+const outerCircumference = 2 * Math.PI * outerRadius; // Approx 264
+const innerCircumference = 2 * Math.PI * innerRadius; // Approx 188
+const outerStrokeWidth = 8;
+const innerStrokeWidth = 6; // Keep inner ring slightly thinner than outer
 
 export function ReturnRates() {
-  const returnRate = 71
-  const trend = "down"
+  const [activeView, setActiveView] = useState<"without" | "with">("without");
+
+  const displayData = data[activeView]; // Data to show in the center
+
+  // Calculate offsets (these don't change based on activeView)
+  const outerProgressOffset = outerCircumference - (outerCircumference * data.without.rate) / 100;
+  const innerProgressOffset = innerCircumference - (innerCircumference * data.with.rate) / 100;
+
+  // Determine active/inactive state for styling
+  const isOuterActive = activeView === 'without';
+  const isInnerActive = activeView === 'with';
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Return Rates</CardTitle>
-        <button className="text-gray-400 hover:text-white">
+    <Card
+      className="rounded-2xl border p-6 shadow-xl h-full flex flex-col"
+      style={{
+        backgroundColor: colors.background,
+        borderColor: colors.cardBorder,
+        color: colors.textPrimary,
+      }}
+    >
+      {/* Card Header */}
+      <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
+        {/* Adjusted Title font */}
+        <CardTitle className="text-xl font-light font-sans text-white" style={{ color: colors.textPrimary }}>
+          Return Rates
+        </CardTitle>
+        <button className="focus:outline-none" style={{ color: colors.iconMuted }}>
           <MoreHorizontal size={20} />
         </button>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center h-[250px]">
-          <div className="relative w-48 h-48">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
-              {/* Background circle */}
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#2A2A2A" strokeWidth="8" strokeLinecap="round" />
 
-              {/* Progress circle */}
-              <motion.circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke="#4AE3F8"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray="251.2"
-                strokeDashoffset="251.2"
-                initial={{ strokeDashoffset: 251.2 }}
-                animate={{
-                  strokeDashoffset: 251.2 - (251.2 * returnRate) / 100,
-                }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                transform="rotate(-90 50 50)"
-              />
+      {/* Card Content */}
+      <CardContent className="p-0 flex flex-col flex-grow items-center justify-center">
+        {/* Chart Area */}
+        <div className="relative w-48 h-48 mb-6">
+          {/* SVG Container */}
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            {/* Background Track Circle - Outer */}
+            <circle
+              cx="50"
+              cy="50"
+              r={outerRadius}
+              fill="none"
+              // *** Apply dynamic track color ***
+              stroke={isOuterActive ? colors.trackActive : colors.trackInactive}
+              strokeWidth={outerStrokeWidth}
+              strokeLinecap="round"
+            />
+            {/* Background Track Circle - Inner */}
+            <circle
+              cx="50"
+              cy="50"
+              r={innerRadius}
+              fill="none"
+              // *** Apply dynamic track color ***
+              stroke={isInnerActive ? colors.trackActive : colors.trackInactive}
+              strokeWidth={innerStrokeWidth}
+              strokeLinecap="round"
+            />
 
-              <text x="50" y="45" textAnchor="middle" fontSize="18" fontWeight="bold" fill="white">
-                {returnRate}%
-              </text>
-              <text x="50" y="65" textAnchor="middle" fontSize="14" fill="white">
-                Returns
-              </text>
+            {/* Progress Circle - Outer (Without Embeds) */}
+            <motion.circle
+              cx="50"
+              cy="50"
+              r={outerRadius}
+              fill="none"
+              // *** Apply dynamic progress color ***
+              stroke={isOuterActive ? colors.progressActive : colors.progressInactive}
+              strokeWidth={outerStrokeWidth}
+              strokeDasharray={outerCircumference}
+              strokeDashoffset={outerProgressOffset}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+              initial={{ strokeDashoffset: outerCircumference }}
+              // Animate stroke color change along with offset
+              animate={{
+                 strokeDashoffset: outerProgressOffset,
+                 stroke: isOuterActive ? colors.progressActive : colors.progressInactive
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }} // Slightly faster color transition?
+            />
 
-              {/* Trend indicator */}
-              {trend === "down" ? (
-                <ArrowDown size={20} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500" />
-              ) : (
-                <ArrowUp size={20} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-green-500" />
+            {/* Progress Circle - Inner (With Embeds) */}
+            <motion.circle
+              cx="50"
+              cy="50"
+              r={innerRadius}
+              fill="none"
+              // *** Apply dynamic progress color ***
+              stroke={isInnerActive ? colors.progressActive : colors.progressInactive}
+              strokeWidth={innerStrokeWidth}
+              strokeDasharray={innerCircumference}
+              strokeDashoffset={innerProgressOffset}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+              initial={{ strokeDashoffset: innerCircumference }}
+              // Animate stroke color change along with offset
+              animate={{
+                strokeDashoffset: innerProgressOffset,
+                stroke: isInnerActive ? colors.progressActive : colors.progressInactive
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            />
+          </svg>
+
+          {/* Center Text & Trend Indicator (Based on activeView) */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-3xl font-bold" style={{ color: colors.textPrimary }}>
+                {displayData.rate}%
+              </span>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={activeView} // Animate when activeView changes
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {displayData.trend === "down" ? (
+                    // <ArrowDown size={16} style={{ color: colors.trendDown }} />
+                    <img src="/downArrow.png" alt="Down Arrow" className="w-3 h-3" />
+                  ) : (
+                    <img src="/upArrow.png" alt="Up Arrow" className="w-3 h-3" />
+                  )}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+            <span className="text-sm mt-1" style={{ color: colors.textSecondary }}>
+              Returns
+            </span>
+          </div>
+        </div>
+
+        {/* Legend Area */}
+        <div className="flex justify-center gap-5">
+          {/* Without Embeds Legend Item (Corresponds to Outer Ring) */}
+          <button
+            onClick={() => setActiveView("without")}
+            className={`flex items-center gap-2 cursor-pointer focus:outline-none transition-colors duration-200`}
+            style={{ color: isOuterActive ? colors.textPrimary : colors.legendInactiveText }}
+          >
+            <span
+              className="relative flex h-3 w-3 rounded-full border border-transparent"
+              // Legend circle background reflects the *bright* active color if selected
+              style={{ backgroundColor: isOuterActive ? colors.progressActive : colors.legendInactiveCircle }}
+            >
+              {/* Active state indicator border uses the bright color */}
+              {isOuterActive && (
+                 <span className="absolute -inset-0.5 rounded-full border" style={{ borderColor: colors.legendActiveHighlight }}></span>
               )}
-            </svg>
-          </div>
+            </span>
+            <span className="text-xs">Without Embeds</span>
+          </button>
 
-          <div className="flex gap-6 mt-4">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#4AE3F8]"></span>
-              <span className="text-sm">Without Embeds</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#2A2A2A]"></span>
-              <span className="text-sm">With Embeds</span>
-            </div>
-          </div>
+          {/* With Embeds Legend Item (Corresponds to Inner Ring) */}
+          <button
+            onClick={() => setActiveView("with")}
+            className={`flex items-center gap-2 cursor-pointer focus:outline-none transition-colors duration-200`}
+             style={{ color: isInnerActive ? colors.textPrimary : colors.legendInactiveText }}
+          >
+             <span
+               className="relative flex h-3 w-3 rounded-full border border-transparent"
+               // Legend circle background reflects the *bright* active color if selected
+               style={{ backgroundColor: isInnerActive ? colors.progressActive : colors.legendInactiveCircle }}
+             >
+               {/* Active state indicator border uses the bright color */}
+               {isInnerActive && (
+                 <span className="absolute -inset-0.5 rounded-full border" style={{ borderColor: colors.legendActiveHighlight }}></span>
+               )}
+            </span>
+            <span className="text-xs">With Embeds</span>
+          </button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

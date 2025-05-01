@@ -23,7 +23,7 @@ export function Dashboard() {
       <main className="flex-1 p-8">
         <Header />
         <div className="flex items-center justify-between mt-6 mb-8">
-          <h1 className="text-4xl font-medium">Dashboard</h1>
+          <h1 className="text-4xl font-light font-sans text-white">Dashboard</h1>
           <DateRangePicker date={dateRange} onDateChange={setDateRange} />
         </div>
 

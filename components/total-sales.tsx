@@ -11,11 +11,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
 
 // Define specific colors based on the image analysis
 const colors = {
   background: "#161618", // Slightly darker background than original reference code
-  cardBorder: "rgba(255, 255, 255, 0.1)", // Subtle white border
+  cardBorder: "rgba(255, 255, 255, 0.4)", // Subtle white border
   textPrimary: "#FFFFFF",
   textSecondary: "#A1A1AA", // Lighter gray for secondary text
   textMuted: "#71717A", // Darker gray for muted text

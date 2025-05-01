@@ -51,9 +51,9 @@ export function WeeklyVisits() {
   }, [activeKey])
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
+    <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Weekly Visits</CardTitle>
+        <CardTitle className="text-xl font-light font-sans">Weekly Visits</CardTitle>
 
         <div className="flex items-center gap-2">
           <Popover>

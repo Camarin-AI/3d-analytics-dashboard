@@ -78,9 +78,9 @@ export function SalesOverview() {
   }), [active, categories, seriesData])
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
+    <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Sales Overview</CardTitle>
+        <CardTitle className="text-xl font-light font-sans">Sales Overview</CardTitle>
         <button className="text-gray-400 hover:text-white">
           <MoreHorizontal size={20} />
         </button>

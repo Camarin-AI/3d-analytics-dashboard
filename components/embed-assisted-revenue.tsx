@@ -57,9 +57,9 @@ export function EmbedAssistedRevenue() {
   })
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
+    <Card className="bg-[#1A1A1A] border-[#FFFFFF66] text-white">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Embed-Assisted Revenue</CardTitle>
+        <CardTitle className="text-xl font-light font-sans text-white">Embed-Assisted Revenue</CardTitle>
 
         <div className="flex items-center gap-2">
           <Popover>
@@ -67,7 +67,7 @@ export function EmbedAssistedRevenue() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white"
+                className="h-8 bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white rounded-md"
               >
                 <Calendar className="mr-2 h-4 w-4" />
                 {format(range.from, "d MMM, yyyy")} – {format(range.to, "d MMM, yyyy")}
