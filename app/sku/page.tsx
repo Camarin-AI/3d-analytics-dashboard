@@ -1,6 +1,6 @@
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
-// import { SkuPage } from "@/components/sku-page"
+import { SkuAnalytics } from "@/components/sku-analytics"
 
 export default function SKU() {
   return (
@@ -9,7 +9,7 @@ export default function SKU() {
       <main className="flex-1 p-8">
         <Header />
         <div className="mt-6">
-          {/* <SkuPage /> */}
+          <SkuAnalytics />
         </div>
       </main>
     </div>
