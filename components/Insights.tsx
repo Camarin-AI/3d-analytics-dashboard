@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { KpiCards } from "@/components/kpi-cards"
 import { RegionGauges } from "@/components/region-gauges"
-// import { RegionAnalytics } from "@/components/region-analytics"
+import { RegionAnalytics } from "@/components/region-analytics"
 import { CustomerVolumeAge } from "@/components/customer-volume-age"
 import { Search } from "@/components/search"
 import { format } from "date-fns"
@@ -40,7 +40,7 @@ export function Insights() {
         </div>
 
         <div className="mt-6">
-          {/* <RegionAnalytics /> */}
+          <RegionAnalytics />
         </div>
 
         <div className="mt-6">
