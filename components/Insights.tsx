@@ -4,13 +4,13 @@ import { useState } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { KpiCards } from "@/components/kpi-cards"
-import { TotalSales } from "@/components/total-sales"
-import { TrafficAnalysis } from "@/components/traffic-analysis-sales"
-import { ReturnRates } from "@/components/return-rates"
-import { ConversionRates } from "@/components/conversion-rates"
-import { EmbedAssistedRevenue } from "@/components/embed-assisted-revenue"
-import { DateRangePicker } from "@/components/date-range-picker"
+import { RegionGauges } from "@/components/region-gauges"
+// import { RegionAnalytics } from "@/components/region-analytics"
+import { CustomerVolumeAge } from "@/components/customer-volume-age"
 import { Search } from "@/components/search"
+import { format } from "date-fns"
+import { Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export function Insights() {
   const [dateRange, setDateRange] = useState({
@@ -24,29 +24,27 @@ export function Insights() {
       <main className="flex-1 p-8">
         <Header />
         <div className="flex items-center justify-between mt-6 mb-8">
-          <h1 className="text-4xl font-light font-sans text-white">Sales Analytics</h1>
-          <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+          <h1 className="text-4xl font-medium">Insights</h1>
+          <Button variant="outline" className="bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white">
+            <Calendar className="mr-2 h-4 w-4" />
+            {format(dateRange.from, "d MMM, yyyy")} - {format(dateRange.to, "d MMM, yyyy")}
+          </Button>
         </div>
 
         <Search />
 
         <KpiCards />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <TotalSales />
-          <TrafficAnalysis />
+        <div className="mt-6">
+          <RegionGauges />
         </div>
 
-        {/* <div className="mt-6">
-          <h2 className="text-2xl font-light font-sans text-white mb-4">Comparative Analysis</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ReturnRates />
-            <ConversionRates />
-          </div> */}
-        {/* </div> */}
+        <div className="mt-6">
+          {/* <RegionAnalytics /> */}
+        </div>
 
         <div className="mt-6">
-          <EmbedAssistedRevenue />
+          <CustomerVolumeAge />
         </div>
       </main>
     </div>
