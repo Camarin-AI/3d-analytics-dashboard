@@ -14,7 +14,7 @@ export function RegionGauges() {
   ]
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#2A2A2A] text-white">
+    <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
       <CardContent className="p-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           {regions.map((region) => (
@@ -71,12 +71,12 @@ function RegionGauge({ region }: RegionGaugeProps) {
           />
 
           {/* Percentage text */}
-          <text x="50" y="55" textAnchor="middle" fontSize="16" fontWeight="bold" fill="white" className="select-none">
+          <text x="50" y="55" textAnchor="middle" fontSize="16" fontWeight="light" fill="white" className="select-none">
             {region.value}%
           </text>
         </svg>
       </div>
-      <p className="mt-2 text-sm text-center">{region.name}</p>
+      <p className="mt-2 text-sm text-center font-light font-sans">{region.name}</p>
     </div>
   )
 }

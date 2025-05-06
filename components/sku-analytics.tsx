@@ -39,7 +39,7 @@ export function SkuAnalytics() {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-2xl font-medium mb-4">Engagement Analysis</h2>
+          <h2 className="text-2xl font-light font-sans font-inter mb-4">Engagement Analysis</h2>
           <div className="space-y-6">
             <SalesFunnelAnalysis />
             <InteractionDuration />
