@@ -12,6 +12,7 @@ export function KpiCards() {
       value: "54,081",
       change: 2,
       trend: "up" as const,
+      period: "last week",
       data: generateSparklineData(30, 0.4),
     },
     {
@@ -19,6 +20,7 @@ export function KpiCards() {
       value: "68%",
       change: 6,
       trend: "up" as const,
+      period: "last week",
       data: generateSparklineData(30, 0.6),
     },
     {
@@ -26,6 +28,7 @@ export function KpiCards() {
       value: "36%",
       change: 6,
       trend: "down" as const,
+      period: "last week",
       data: generateSparklineData(30, 0.6),
     },
     {
@@ -33,12 +36,12 @@ export function KpiCards() {
       value: "1m 2s",
       change: 6,
       trend: "up" as const,
+      period: "last week",
       data: generateSparklineData(30, 0.5),
     },
   ];
 
   return (
-    // tighter gap between cards
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
       {kpis.map((kpi, idx) => (
         <KpiCard key={idx} {...kpi} />
@@ -52,13 +55,13 @@ interface KpiCardProps {
   value: string;
   change: number;
   trend: "up" | "down";
+  period: string;
   data: number[];
 }
 
-function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
+function KpiCard({ title, value, change, trend, period, data }: KpiCardProps) {
   const isUp = trend === "up";
 
-  // colors from mock
   const lineColor = isUp ? "#C0AFE2" : "#EF4444";
   const fillToColor = isUp ? "#D8B4FE" : "#FECACA";
 
@@ -93,25 +96,16 @@ function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
   };
 
   return (
-    <div
-      className="
-        flex items-center justify-between
-        bg-[#121212] rounded p-6 overflow-hidden
-        border-black
-      "
-      // very subtle border so cards read as one piece
-      // style={{ border: "0.5px solid rgba(28, 27, 27, 0.2)" }}
-    >
-      {/* Left: title + value */}
+    <div className="flex items-center justify-between bg-[#121212] rounded p-6 border-black overflow-hidden">
+      {/* Left: Title + Value */}
       <div>
-        <p className="text-xs font-light text-gray-300">{title}</p>
-        <p className="mt-1 text-3xl font-light text-white">
-          {value}
-        </p>
+        {/* lighter gray title */}
+        <p className="text-xs font-light text-gray-400">{title}</p>
+        <p className="mt-1 text-3xl font-light text-white">{value}</p>
       </div>
 
-      {/* Right: sparkline + overlay */}
-      <div className="relative w-24 h-12 flex-shrink-0">
+      {/* Right: Sparkline + Change badge */}
+      <div className="relative w-32 h-12 flex-shrink-0">
         <Chart
           options={options}
           series={[{ data }]}
@@ -120,9 +114,9 @@ function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
           height={48}
         />
 
-        {/* center-top overlay */}
-        <div className="absolute inset-0 flex flex-col items-center pt-1 pointer-events-none">
-          <div className="flex items-center gap-0">
+        {/* top-right badge */}
+        <div className="absolute top-1 right-2 flex flex-col items-end pointer-events-none">
+          <div className="flex items-center gap-1">
             {isUp ? (
               <Image src="/upArrow.png" alt="Up" width={12} height={12} />
             ) : (
@@ -130,8 +124,8 @@ function KpiCard({ title, value, change, trend, data }: KpiCardProps) {
             )}
             <span className="text-lg font-semibold text-white">{change}%</span>
           </div>
-          <span className="mt-0.5 text-[10px] text-gray-400 tracking-wide">
-            last week
+          <span className="mt-0.5 text-[10px] text-gray-400 font-light">
+            {period}
           </span>
         </div>
       </div>

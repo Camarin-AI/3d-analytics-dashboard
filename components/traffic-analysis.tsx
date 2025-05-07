@@ -159,7 +159,7 @@ export function TrafficAnalysis() {
                     prev === entry.name ? null : entry.name
                   )
                 }
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 font-light font-sans"
               >
                 <span
                   className="w-3 h-3 rounded-full"
