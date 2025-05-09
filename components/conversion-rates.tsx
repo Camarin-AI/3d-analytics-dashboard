@@ -21,7 +21,7 @@ const colors = {
   textPrimary: "#FFFFFF",
   textSecondary: "#A1A1AA", // Lighter gray for axis/legend text
   iconMuted: "#6B7280",
-  gridLine: "rgba(255, 255, 255, 0.1)", // Faint white grid lines
+  gridLine: "rgba(255, 255, 255, 0.3)", // Faint white grid lines
   barWithEmbeds: "#14B8A6", // Teal
   barWithoutEmbeds: "#F59E0B", // Orange/Amber
   legendActiveBorder: "#FFFFFF", // White border for active legend item (using bar color bg)

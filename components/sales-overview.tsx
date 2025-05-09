@@ -146,7 +146,7 @@ export function SalesOverview() {
                     <div></div>
                     {/* Second third (KPI 1) */}
                     <div className="flex flex-row items-center justify-center pointer-events-auto">
-                        <span className="text-3xl font-semibold mr-1.5" style={{ color: colors.textPrimary }}>
+                        <span className="text-xl font-semibold font-light font-sans mr-1.5" style={{ color: colors.textPrimary }}>
                             {kpiData[0].kpiValue}
                         </span>
                         <div className="flex flex-col items-start text-[10px] leading-tight">
@@ -159,7 +159,7 @@ export function SalesOverview() {
                     </div>
                     {/* Third third (KPI 2) */}
                     <div className="flex flex-row items-center justify-center pointer-events-auto">
-                         <span className="text-3xl font-semibold mr-1.5" style={{ color: colors.textPrimary }}>
+                         <span className="text-xl font-semibold font-light font-sans mr-1.5" style={{ color: colors.textPrimary }}>
                             {kpiData[1].kpiValue}
                         </span>
                         <div className="flex flex-col items-start text-[10px] leading-tight">

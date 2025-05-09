@@ -143,8 +143,8 @@ export function TotalSales() {
               className="relative z-10 text-xs px-4 py-1.5 rounded-full border"
               style={{
                 backgroundColor: colors.badgeBg,
-                borderColor: colors.badgeBorder,
-                color: colors.textSecondary,
+                borderColor: colors.cardBorder,
+                color: "#EBB866",
               }}
             >
               Best Sales of the Month
@@ -186,7 +186,7 @@ export function TotalSales() {
               transition={{ duration: 1.2, ease: "easeInOut" }}
             />
           </div>
-          <div className="flex justify-between text-xs mt-1">
+          <div className="flex justify-between text-lg mt-1">
             <span style={{ color: colors.previousWeekLabel }}>Previous Week</span>
             <span style={{ color: colors.textSecondary }}>
               INR {previousWeekSales.toLocaleString("en-IN")}
