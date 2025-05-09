@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import React, { useState, useMemo } from "react"
-import { Calendar, MoreHorizontal } from "lucide-react"
-import { motion } from "framer-motion"
+import React, { useState } from "react";
+import { Calendar, MoreHorizontal, ArrowUp } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   LineChart,
@@ -11,200 +11,203 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-} from "recharts"
-import { format } from "date-fns"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { DateRangePicker } from "@/components/date-range-picker"
+  DotProps,
+} from "recharts";
+import { format } from "date-fns";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
-const data = [
-  { day: 1, unique: 40000, total: 60000 },
-  { day: 2, unique: 63480, total: 85000 },
-  { day: 3, unique: 30000, total: 58000 },
-  { day: 4, unique: 72000, total: 90000 },
-  { day: 5, unique: 55000, total: 88000 },
-  { day: 6, unique: 48000, total: 92000 },
-  { day: 7, unique: 35000, total: 65000 },
-]
+// --- Color Palette (Based on Target Image) ---
+const colors = {
+    background: "#161618",
+    cardBorder: "rgba(255, 255, 255, 0.4)",
+    textPrimary: "#F4F4F5", // For main values in tooltip and title
+    textSecondary: "#A1A1AA", // For axis labels, legend, "over last week"
+    textMuted: "#71717A", // For date range button text
+    gridLine: "rgba(255, 255, 255, 0.08)",
+
+    dateRangeButtonBg: "#27272A",
+    dateRangeButtonBorder: "rgba(255, 255, 255, 0.15)",
+
+    // Line colors from the target image
+    lineSkuInteraction: "#22D3EE", // Bright Cyan
+    lineSiteAverage: "#0D9488",   // Darker Teal/Green
+
+    tooltipBg: "#1C1C1E", // Dark, slightly desaturated background
+    tooltipBorder: "rgba(255, 255, 255, 0.1)", // Fainter border for tooltip
+    trendUp: "#34D399",
+    trendDown: "#EF4444", // Red for trend
+    activeDotFill: "#FFFFFF", // White fill for the inner part of the active dot
+    // activeDotBorder will be the line color itself
+};
+
+// Initial Data with previous values for trend calculation
+const initialData = [
+  { day: "1", unique: 50, total: 20, prevUnique: 45, prevTotal: 18 },
+  { day: "2", unique: 100, total: 95, prevUnique: 48, prevTotal: 90 }, // "95 seconds" point
+  { day: "3", unique: 30, total: 20, prevUnique: 105, prevTotal: 22 },
+  { day: "4", unique: 20, total: 90, prevUnique: 28, prevTotal: 85 },
+  { day: "5", unique: 120, total: 110, prevUnique: 18, prevTotal: 105 },
+  { day: "6", unique: 70, total: 60, prevUnique: 115, prevTotal: 65 },
+  { day: "7", unique: 10, total: 75, prevUnique: 75, prevTotal: 70 },
+];
+
+// --- Custom Tooltip Content (Top Tooltip) ---
+const CustomInteractionTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const dataPoint = payload[0]; // Data for the primary line being hovered (based on payload order)
+    const currentValue = dataPoint.value;
+    const seriesNameKey = dataPoint.dataKey as "unique" | "total"; // 'unique' or 'total'
+    const originalDataPoint = initialData.find(d => d.day === label); // Label is the x-axis value (day)
+
+    let trendPercent = 0;
+    if (originalDataPoint) {
+      const prevValue = seriesNameKey === 'unique' ? originalDataPoint.prevUnique : originalDataPoint.prevTotal;
+      if (prevValue && prevValue !== 0) {
+        trendPercent = Math.round(((currentValue - prevValue) / prevValue) * 100);
+      }
+    }
+
+    return (
+      <div
+        className="rounded-md border shadow-lg p-2 min-w-[130px]" // Slightly smaller padding
+        style={{
+          backgroundColor: colors.tooltipBg,
+          borderColor: colors.tooltipBorder,
+          color: colors.textPrimary,
+        }}
+      >
+        <p className="text-base font-semibold mb-0.5">{currentValue.toLocaleString()} seconds</p>
+        {trendPercent !== 0 && ( // Only show trend if it's not zero
+            <div className="flex items-center text-[11px]" style={{ color: trendPercent > 0 ? colors.trendUp : colors.trendDown /* Needs colors.trendDown */ }}>
+                {trendPercent > 0 ? <ArrowUp size={9} className="mr-0.5" /> : <ArrowUp size={9} className="mr-0.5 transform rotate-180" />}
+                {Math.abs(trendPercent)}%
+                <span className="ml-1 text-[9px]" style={{ color: colors.textSecondary }}>over last week</span>
+            </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
+// --- Custom Active Dot ---
+const CustomActiveDot = (props: DotProps & { stroke?: string, dataKey?: string }) => {
+    const { cx, cy, stroke, dataKey } = props;
+    // The outer ring of the dot takes the color of the line
+    const dotStrokeColor = stroke || (dataKey === 'unique' ? colors.lineSkuInteraction : colors.lineSiteAverage);
+
+    if (cx == null || cy == null) return null; // Guard against undefined coords
+
+    return (
+        <g>
+            {/* Outer colored ring */}
+            <circle cx={cx} cy={cy} r={5} fill={dotStrokeColor} stroke="none" />
+            {/* Inner white dot */}
+            <circle cx={cx} cy={cy} r={2.5} fill={colors.activeDotFill} stroke="none" />
+        </g>
+    );
+};
+
 
 export function InteractionDuration() {
-  // Stubbed date range
-  const [range] = useState({
+  const [range, setRange] = useState({
     from: new Date(2025, 0, 1),
     to:   new Date(2025, 0, 7),
-  })
-
-  // which series is highlighted?
-  // null = both shown equally
-  const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique")
-
-  // find the peak entry for the active series
-  const peak = useMemo(() => {
-    const key = activeKey || "unique"
-    let max = -Infinity, entry = data[0]
-    data.forEach(d => {
-      if (d[key] > max) {
-        max = d[key]; entry = d
-      }
-    })
-    return { entry, value: entry[activeKey || "unique"] }
-  }, [activeKey])
-
-  const [dateRange, setDateRange] = useState({
-    from: new Date(2025, 0, 1), // Jan 1, 2025
-    to: new Date(2025, 0, 7), // Jan 7, 2025
-  })
+  });
+  const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique");
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl font-light font-sans">Interaction Session Duration</CardTitle>
-
-        <div className="flex items-center gap-2">
+    <Card
+        className="rounded-2xl border p-6 shadow-xl h-full flex flex-col font-[Inter,ui-sans-serif,system-ui]"
+        style={{ backgroundColor: colors.background, borderColor: colors.cardBorder, color: colors.textPrimary }}
+    >
+      <CardHeader className="flex flex-row items-center justify-between p-0 mb-5"> {/* Adjusted mb */}
+        <CardTitle className="text-xl font-light font-sans tracking-normal" style={{ color: colors.textPrimary }}> {/* Adjusted font */}
+            Interaction Session Duration
+        </CardTitle>
+        <div className="flex items-center gap-2.5">
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white"
-              >
-                <Calendar className="mr-2 h-4 w-4" />
+              <Button variant="outline" size="sm" className="h-8 px-3 rounded-lg text-xs font-normal border focus:outline-none focus:ring-1 focus:ring-white/30 hover:bg-[#3f3f46]" style={{ backgroundColor: colors.dateRangeButtonBg, borderColor: colors.dateRangeButtonBorder, color: colors.textMuted }} >
+                <Calendar className="mr-1.5 h-3.5 w-3.5" style={{ color: colors.textSecondary }} />
                 {format(range.from, "d MMM, yyyy")} – {format(range.to, "d MMM, yyyy")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-[#1A1A1A] border-[#2A2A2A]" align="end">
-              {/* Calendar UI goes here */}
-              <div>
-              <DateRangePicker date={dateRange} onDateChange={setDateRange} />
-              </div>
+            <PopoverContent className="w-auto p-0 bg-[#1C1C1E] border-[#3A3A3A] rounded-lg shadow-xl" align="end">
+              <div className="p-2 text-xs">Date Picker Placeholder</div>
+              {/* <DateRangePicker date={range} onDateChange={setRange} /> */}
             </PopoverContent>
           </Popover>
-
-          <button className="text-gray-400 hover:text-white">
-            <MoreHorizontal size={20} />
+          <button className="focus:outline-none p-1 rounded-full hover:bg-[#27272A]" style={{ color: colors.textMuted }}>
+            <MoreHorizontal size={18} />
           </button>
         </div>
       </CardHeader>
 
-      <CardContent>
-        <div className="relative h-[300px]">
-          {/* Peak tooltip */}
-          <div
-            className="absolute z-10 p-2 rounded bg-[#111] bg-opacity-60"
-            style={{
-              // position roughly above the peak day
-              left: `calc(${(peak.entry.day - 1) / 6 * 100}% - 40px)`,
-              top: "3%",
-            }}
-          >
-            <div className="text-lg font-semibold">
-              {peak.value.toLocaleString()}
-            </div>
-            <div className="text-xs text-green-400">+5% over last week</div>
-          </div>
-
+      <CardContent className="p-0 flex-grow flex flex-col">
+        <div className="relative h-[280px]"> {/* Adjusted height */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="h-full"
-          >
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, ease: "circOut", delay: 0.1 }} className="h-full" >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
-                <CartesianGrid stroke="#2A2A2A" strokeDasharray="3 3" vertical={false} />
-
+              <LineChart data={initialData} margin={{ top: 40, right: 10, left: 5, bottom: 5 }}> {/* More top margin, less right/bottom */}
+                <CartesianGrid stroke={colors.gridLine} strokeDasharray="0" horizontal={true} vertical={false} /> {/* Solid horizontal lines */}
                 <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9CA3AF" }}
+                  dataKey="day" axisLine={false} tickLine={false}
+                  tick={{ fill: colors.textSecondary, fontSize: 10, fontWeight: 400 }} dy={10}
+                  interval="preserveStartEnd" // Ensure first and last ticks are shown
                 />
-
                 <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9CA3AF" }}
-                  domain={[0, 100000]}
-                  ticks={[0,20000,40000,60000,80000,100000]}
-                  tickFormatter={v => v === 0 ? "0k" : `${v/1000}k`}
+                  axisLine={false} tickLine={false}
+                  tick={{ fill: colors.textSecondary, fontSize: 10, fontWeight: 400 }}
+                  domain={[0, 160]} ticks={[0, 40, 80, 120, 160]} // Match Y-axis from image
+                  tickFormatter={v => `${v}s`} width={35}
                 />
-
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#2A2A2A",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "white",
-                  }}
-                  formatter={(val: number) => [`${val.toLocaleString()}`, ""]}
-                  labelFormatter={(d: any) => `Day ${d}`}
+                  position={{ y: -55 }} // Fine-tune Y offset for tooltip above dot
+                  cursor={{ stroke: colors.textPrimary, strokeWidth: 0.5, strokeDasharray: '0' }} // Solid vertical line
+                  content={<CustomInteractionTooltip />}
+                  wrapperStyle={{ zIndex: 50, outline: 'none' }}
+                  isAnimationActive={false}
                 />
-
-                {/** Unique Visitors line */}
                 <Line
-                  type="monotone"
-                  dataKey="unique"
-                  stroke="#4AE3F8"
-                  strokeWidth={ activeKey === "unique" || activeKey === null ? 3 : 1.5 }
-                  dot={false}
-                  activeDot={{ r: 6, fill: "#4AE3F8" }}
-                  style={{
-                    opacity: activeKey === "total" ? 0.3 : 1,
-                    filter: activeKey === "unique"
-                      ? "drop-shadow(0px 0px 10px rgba(74,227,248,0.6))"
-                      : "none"
-                  }}
+                  type="monotone" dataKey="unique" stroke={colors.lineSkuInteraction}
+                  strokeWidth={ activeKey === "unique" || activeKey === null ? 2.5 : 1.5 }
+                  dot={false} activeDot={(props: DotProps & { stroke?: string, dataKey?: string }) => <CustomActiveDot {...props} stroke={colors.lineSkuInteraction} dataKey="unique" />}
+                  style={{ opacity: activeKey === "total" ? 0.4 : 1, filter: activeKey === "unique" ? `drop-shadow(0px 0px 6px ${colors.lineSkuInteraction}99)` : "none" }} // Adjusted shadow
+                  animationEasing="ease-out" animationDuration={800}
                 />
-
-                {/** Total Visitors line */}
                 <Line
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#10B981"
-                  strokeWidth={ activeKey === "total" || activeKey === null ? 3 : 1.5 }
-                  dot={false}
-                  activeDot={{ r: 6, fill: "#10B981" }}
-                  style={{
-                    opacity: activeKey === "unique" ? 0.3 : 1,
-                    filter: activeKey === "total"
-                      ? "drop-shadow(0px 0px 10px rgba(16,185,129,0.6))"
-                      : "none"
-                  }}
+                  type="monotone" dataKey="total" stroke={colors.lineSiteAverage}
+                  strokeWidth={ activeKey === "total" || activeKey === null ? 2.5 : 1.5 }
+                  dot={false} activeDot={(props: DotProps & { stroke?: string, dataKey?: string }) => <CustomActiveDot {...props} stroke={colors.lineSiteAverage} dataKey="total"/>}
+                  style={{ opacity: activeKey === "unique" ? 0.4 : 1, filter: activeKey === "total" ? `drop-shadow(0px 0px 6px ${colors.lineSiteAverage}99)` : "none" }} // Adjusted shadow
+                  animationEasing="ease-out" animationDuration={800}
                 />
               </LineChart>
             </ResponsiveContainer>
           </motion.div>
         </div>
 
-        {/* Legend / toggles */}
-        <div className="flex justify-center gap-8 mt-4">
+        {/* Legend */}
+        <div className="flex justify-center gap-5 mt-4 pt-1"> {/* Adjusted gap/margin */}
           {[
-            { key: "unique", label: "Interaction with SKU", color: "#4AE3F8" },
-            { key: "total",  label: "Site Average",  color: "#10B981" },
+            { key: "unique", label: "Interaction with SKU", color: colors.lineSkuInteraction },
+            { key: "total",  label: "Site Average",  color: colors.lineSiteAverage },
           ].map(series => {
-            const isFaded = activeKey !== null && activeKey !== series.key
+            const isFaded = activeKey !== null && activeKey !== series.key;
             return (
-              <button
-                key={series.key}
-                onClick={() => setActiveKey(prev => prev === series.key ? null : (series.key as any))}
-                className="flex items-center gap-2"
-              >
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{
-                    backgroundColor: series.color,
-                    opacity: isFaded ? 0.3 : 1,
-                  }}
-                />
-                <span className={`text-sm ${isFaded ? "text-gray-400" : "text-white"}`}>
-                  {series.label}
-                </span>
-              </button>
-            )
+              <button key={series.key} onClick={() => setActiveKey(prev => prev === series.key ? null : (series.key as any))}
+                className={`flex items-center gap-1.5 text-xs transition-opacity duration-200 ${isFaded ? "opacity-50 hover:opacity-75" : "opacity-100"}`} // Adjusted opacity
+                style={{ color: colors.textSecondary }} >
+                <span className="w-2.5 h-2.5 rounded-full border" style={{ backgroundColor: series.color, borderColor: series.color }} /> {/* Border matches bg */}
+                <span>{series.label}</span>
+              </button> );
           })}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

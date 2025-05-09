@@ -8,9 +8,8 @@ import { VisitorAnalysis } from "@/components/visitor-analysis"
 import { SalesFunnelAnalysis } from "@/components/sales-funnel-analysis"
 import { InteractionDuration } from "@/components/interaction-duration"
 import { Search } from "@/components/search"
-import { format } from "date-fns"
-import { Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { DateRangePicker } from "@/components/date-range-picker"
+import { Sidebar } from "@/components/sidebar"
 
 export function SkuAnalytics() {
   const [dateRange, setDateRange] = useState({
@@ -19,15 +18,15 @@ export function SkuAnalytics() {
   })
 
   return (
+    
     <div className="flex min-h-screen bg-[#121212] text-white">
-      <main className="flex-1 p-8">
-        <div className="flex items-center justify-between mt-6 mb-8">
-          <h1 className="text-4xl font-medium">SKU Analytics</h1>
-          <Button variant="outline" className="bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white">
-            <Calendar className="mr-2 h-4 w-4" />
-            {format(dateRange.from, "d MMM, yyyy")} - {format(dateRange.to, "d MMM, yyyy")}
-          </Button>
-        </div>
+    <Sidebar />
+    <main className="flex-1 p-8">
+      <Header />
+      <div className="flex items-center justify-between mt-6 mb-8">
+        <h1 className="text-4xl font-light font-sans text-white">SKU Analytics</h1>
+        <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+      </div>
 
         <Search />
 
