@@ -21,10 +21,10 @@ export function SkuAnalytics() {
     
     <div className="flex min-h-screen bg-[#121212] text-white">
     <Sidebar />
-    <main className="flex-1 p-8">
+    <main className="flex-1 p-6 md:p-8"> 
       <Header />
-      <div className="flex items-center justify-between mt-6 mb-8">
-        <h1 className="text-4xl font-light font-sans text-white">SKU Analytics</h1>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-6 mb-8 gap-4 md:gap-0">
+        <h1 className="text-3xl md:text-4xl font-light font-sans text-white">SKU Analytics</h1>
         <DateRangePicker date={dateRange} onDateChange={setDateRange} />
       </div>
 
@@ -32,13 +32,18 @@ export function SkuAnalytics() {
 
         <KpiCards />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <SkuDetails />
-          <VisitorAnalysis />
+        {/* Adjusted grid layout for SkuDetails and VisitorAnalysis */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
+          <div className="lg:col-span-3"> {/* SkuDetails takes 3 out of 5 columns */}
+            <SkuDetails />
+          </div>
+          <div className="lg:col-span-2"> {/* VisitorAnalysis takes 2 out of 5 columns */}
+            <VisitorAnalysis />
+          </div>
         </div>
 
         <div className="mt-6">
-          <h2 className="text-2xl font-light font-sans font-inter mb-4">Engagement Analysis</h2>
+          <h2 className="text-xl md:text-2xl font-light font-sans font-inter mb-4">Engagement Analysis</h2>
           <div className="space-y-6">
             <SalesFunnelAnalysis />
             <InteractionDuration />
