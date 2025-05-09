@@ -1,105 +1,130 @@
-// src/components/dashboard/CustomerVolumeAgeRefined.tsx (Example Path)
-
 "use client";
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MoreHorizontal, ArrowUp } from "lucide-react"; // Using ArrowUp for trend
+import { Calendar, MoreHorizontal, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
 } from "recharts";
 
-
-// --- Color Palette (Sampled from Image) ---
+// --- Color Palette (from your code) ---
 const colors = {
-    background: "#1A1A1A", // Main card background
+    background: "#1A1A1A",
     cardBorder: "rgba(255, 255, 255, 0.4)",
-    textPrimary: "#F4F4F5", // Brightest text (values)
-    textSecondary: "#A1A1AA", // Subtitles, axis labels, legend
-    textMuted: "#71717A", // Dimmer text ('over last week')
-    gridLine: "rgba(255, 255, 255, 0.08)", // Faint grid lines
-
+    textPrimary: "#F4F4F5",
+    textSecondary: "#A1A1AA",
+    textMuted: "#71717A",
+    gridLine: "rgba(255, 255, 255, 0.08)",
     dateRangeButtonBg: "#27272A",
     dateRangeButtonBorder: "rgba(255, 255, 255, 0.15)",
-
-    barMen: "#06B6D4", // Cyan/Teal
-    barWomen: "#F59E0B", // Orange/Amber
-
-    tooltipBg: "#1C1C1E", // Dark background for tooltip
+    barMen: "#06B6D4",
+    barWomen: "#F59E0B",
+    tooltipBg: "#1C1C1E",
     tooltipBorder: "rgba(255, 255, 255, 0.15)",
-    tooltipDot: "#FFFFFF", // White dot for hover indicator
-    trendUp: "#34D399", // Green for trend
+    tooltipDot: "#FFFFFF", // White dot for peak bar hover indicator
+    trendUp: "#34D399",
 };
 
-// --- Chart Data (Adjust values to match image proportions) ---
+// --- Chart Data (from your code) ---
 const chartData = [
     { age: "<18", men: 5800, women: 3800 },
     { age: "19-24", men: 8400, women: 6800 },
     { age: "25-30", men: 11200, women: 10000 },
     { age: "31-35", men: 13000, women: 12500 },
-    { age: "36-40", men: 14382, women: 13000 }, // Peak data point
+    { age: "36-40", men: 14382, women: 13000 }, // Peak data point for Men
     { age: "41-45", men: 10800, women: 7000 },
     { age: "45-50", men: 7800, women: 9200 },
     { age: "51-55", men: 5200, women: 6500 },
     { age: ">55", men: 8200, women: 6200 },
 ];
 
+// --- Peak Bar Configuration (for special tooltip and dot) ---
+const peakAgeGroup = "36-40";
+const peakBarMenValue = 14382; // The value of the men's bar in the peak age group
+const peakBarDetails = { // Data for the special tooltip for the peak bar
+    trend: 6,
+    averageSpend: 3481,
+};
+
 // --- Custom Tooltip Content ---
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-        // The image tooltip only shows info for the PEAK bar.
-        // Here, we'll check if the current hovered bar is the peak for Men.
-        // In a real scenario, you'd identify the peak based on your data logic.
-        // For this replication, let's assume the 36-40 age group is the designated peak.
-        const isPeak = label === "36-40"; // Assuming "36-40" is the peak data point from image
-        const peakValue = 14382;
-        const peakTrend = 6;
-        const peakAverageSpend = 3481;
+        const menData = payload.find((p: any) => p.dataKey === 'men');
+        const womenData = payload.find((p: any) => p.dataKey === 'women');
 
-        if (isPeak) {
-            return (
-                <div
-                    className="rounded-md border shadow-lg p-3 min-w-[180px]" // Adjusted padding and min-width
-                    style={{
-                        backgroundColor: colors.tooltipBg,
-                        borderColor: colors.tooltipBorder,
-                        color: colors.textPrimary,
-                    }}
-                >
-                    <div className="flex items-baseline gap-1.5 mb-0.5">
-                        <p className="text-base font-semibold">{peakValue.toLocaleString()}</p>
-                        <div className="flex items-center text-xs" style={{ color: colors.trendUp }}>
-                            <ArrowUp size={10} className="mr-0.5" /> {peakTrend}%
-                            <span className="ml-1 text-[10px]" style={{ color: colors.textMuted }}>over last week</span>
+        // Check if the current hovered bar is the designated peak bar for men
+        const isPeakMenBarHovered = label === peakAgeGroup && menData?.value === peakBarMenValue;
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-md border shadow-lg p-3"
+                style={{
+                    backgroundColor: colors.tooltipBg,
+                    borderColor: colors.tooltipBorder,
+                    color: colors.textPrimary,
+                    minWidth: isPeakMenBarHovered ? '180px' : 'auto',
+                }}
+            >
+                {isPeakMenBarHovered ? (
+                    <> {/* Special content for the peak bar */}
+                        <div className="flex items-baseline gap-1.5 mb-0.5">
+                            <p className="text-base font-semibold">{peakBarMenValue.toLocaleString()}</p>
+                            <div className="flex items-center text-xs" style={{ color: colors.trendUp }}>
+                                <ArrowUp size={10} className="mr-0.5" /> {peakBarDetails.trend}%
+                                <span className="ml-1 text-[10px]" style={{ color: colors.textMuted }}>over last week</span>
+                            </div>
                         </div>
-                    </div>
-                    <p className="text-xs" style={{ color: colors.textSecondary }}>
-                        Average Spend: INR {peakAverageSpend.toLocaleString('en-IN')}
-                    </p>
-                </div>
-            );
-        }
+                        <p className="text-xs" style={{ color: colors.textSecondary }}>
+                            Average Spend: INR {peakBarDetails.averageSpend.toLocaleString('en-IN')}
+                        </p>
+                    </>
+                ) : (
+                    <> {/* Generic content for all other bars */}
+                        <p className="text-sm font-medium mb-1.5" style={{ color: colors.textPrimary }}>{label}</p>
+                        {menData && (
+                            <div className="flex items-center text-xs">
+                                <span className="w-2 h-2 rounded-full mr-1.5" style={{backgroundColor: menData.color || colors.barMen}}></span>
+                                Men: <span className="font-medium ml-1">{menData.value.toLocaleString()}</span>
+                            </div>
+                        )}
+                        {womenData && (
+                            <div className="flex items-center text-xs mt-1">
+                                <span className="w-2 h-2 rounded-full mr-1.5" style={{backgroundColor: womenData.color || colors.barWomen}}></span>
+                                Women: <span className="font-medium ml-1">{womenData.value.toLocaleString()}</span>
+                            </div>
+                        )}
+                    </>
+                )}
+            </motion.div>
+        );
     }
-    return null; // No tooltip for other bars as per image
+    return null;
 };
 
 
-// --- Component ---
 export function CustomerVolumeAge() {
     const [dateRange] = useState({ from: new Date(2025, 0, 1), to: new Date(2025, 0, 7) });
-    const [activeBarData, setActiveBarData] = useState<any>(null); // To store data of hovered peak bar
+    // State for custom positioning of peak bar tooltip and showing dot
+    const [peakBarHoverState, setPeakBarHoverState] = useState<{ x: number; y: number; active: boolean } | null>(null);
+    // State for legend interaction
+    const [activeLegend, setActiveLegend] = useState<string | null>(null);
 
-    const peakAgeGroup = "36-40"; // The age group that shows the tooltip
+    const handleLegendClick = (dataKey: string) => {
+        setActiveLegend(prev => prev === dataKey ? null : dataKey);
+    };
 
     return (
         <Card
             className="rounded-2xl border p-6 shadow-lg h-full flex flex-col font-[Inter,ui-sans-serif,system-ui]"
             style={{ backgroundColor: colors.background, borderColor: colors.cardBorder, color: colors.textPrimary }}
         >
-            {/* Header */}
             <CardHeader className="flex flex-row items-center justify-between p-0 mb-6">
                 <CardTitle className="text-xl font-light font-sans tracking-wide" style={{ color: colors.textPrimary }}>
                     Customer Volume with Age
@@ -115,11 +140,8 @@ export function CustomerVolumeAge() {
                 </div>
             </CardHeader>
 
-            {/* Content */}
             <CardContent className="p-0 flex-grow flex flex-col">
-                {/* Chart Area */}
-                <div className="h-[320px] relative"> {/* Increased height for chart */}
-                    {/* Tooltip will be rendered by Recharts, but we'll style its content */}
+                <div className="h-[320px] relative">
                     <motion.div
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -129,32 +151,33 @@ export function CustomerVolumeAge() {
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                                 data={chartData}
-                                margin={{ top: 10, right: 5, left: -25, bottom: 0 }} // Adjust margins
-                                barGap={4} // Space between bars of the same group
-                                barCategoryGap="35%" // Space between age groups
+                                // 2. Fix y-axis labels cropping: Increased left margin
+                                margin={{ top: 20, right: 5, left: 15, bottom: 5 }} // Increased top margin for potential dot, increased left margin
+                                barGap={4}
+                                barCategoryGap="35%"
                                 onMouseMove={(state) => {
                                     if (state.isTooltipActive && state.activePayload && state.activeLabel === peakAgeGroup) {
-                                        // Only activate for the peak bar
-                                        const barData = state.activePayload[0]; // Assuming Men bar is first for peak
-                                        const barX = barData.payload.x + barData.payload.width / 2; // Center of the bar
-                                        const barY = barData.payload.y; // Top of the bar
-                                        setActiveBarData({ x: barX, y: barY, data: chartData.find(d => d.age === peakAgeGroup) });
-                                    } else {
-                                        setActiveBarData(null);
+                                        const menBarPayload = state.activePayload.find(p => p.dataKey === 'men');
+                                        if (menBarPayload && menBarPayload.value === peakBarMenValue) {
+                                            // @ts-ignore // Recharts payload type can be complex
+                                            const barX = menBarPayload.payload.x + menBarPayload.payload.width / 2;
+                                            // @ts-ignore
+                                            const barY = menBarPayload.payload.y;
+                                            setPeakBarHoverState({ x: barX, y: barY, active: true });
+                                            return;
+                                        }
                                     }
+                                    setPeakBarHoverState(prev => prev && prev.active ? { ...prev, active: false } : null);
                                 }}
-                                onMouseLeave={() => setActiveBarData(null)}
+                                onMouseLeave={() => setPeakBarHoverState(null)}
                             >
-                                <defs>
-                                    {/* You can define gradients here if bars need them, image looks solid */}
-                                </defs>
                                 <CartesianGrid strokeDasharray="3 0" stroke={colors.gridLine} vertical={false} />
                                 <XAxis
                                     dataKey="age"
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: colors.textSecondary, fontSize: 11, fontWeight: 400 }}
-                                    dy={10} // Offset X-axis labels down
+                                    dy={10}
                                 />
                                 <YAxis
                                     axisLine={false}
@@ -162,55 +185,81 @@ export function CustomerVolumeAge() {
                                     tick={{ fill: colors.textSecondary, fontSize: 11, fontWeight: 400 }}
                                     domain={[0, 16000]}
                                     ticks={[0, 4000, 8000, 12000, 16000]}
-                                    tickFormatter={(value) => (value === 0 ? "0s" : `${value / 1000}k`)}
-                                    width={35} // Give Y-axis some space
+                                    tickFormatter={(value) => (value === 0 ? "0" : `${value / 1000}k`)} // Changed "0s" to "0"
+                                    width={40} // Ensure enough width for Y-axis labels
                                 />
                                 <Tooltip
-                                    cursor={false} // Disable default Recharts cursor
+                                    // 1. Tooltip functional for every bar:
+                                    //    - CustomTooltip handles content for all bars.
+                                    //    - Conditional positioning for the peak bar's special tooltip.
+                                    cursor={{ fill: 'transparent' }} // Make cursor area invisible
                                     wrapperStyle={{ zIndex: 50, outline: 'none' }}
-                                    content={<CustomTooltip />} // Use custom content
-                                    position={activeBarData ? { x: activeBarData.x - 90, y: activeBarData.y - 85 } : undefined} // Adjust position relative to bar
-                                    isAnimationActive={false} // Disable default tooltip animation
+                                    content={<CustomTooltip />}
+                                    position={peakBarHoverState?.active ? { x: peakBarHoverState.x - 90, y: peakBarHoverState.y - 95 } : undefined}
+                                    isAnimationActive={false}
                                 />
-                                <Bar dataKey="men" name="Men" fill={colors.barMen} radius={[4, 4, 0, 0]} barSize={8}>
-                                    {/* Custom dot for peak bar - only one dot should appear */}
+                                <Bar dataKey="men" name="Men" radius={[4, 4, 0, 0]} barSize={8}>
                                     {chartData.map((entry, index) => (
-                                        entry.age === peakAgeGroup ?
-                                        <Cell key={`cell-men-${index}`}>
-                                            {activeBarData && activeBarData.data.age === peakAgeGroup && (
-                                                <LabelList
-                                                    dataKey="men" // Not actually used for value
-                                                    position="top"
-                                                    content={() => (
-                                                        <circle cx={0} cy={-5} r={4} fill={colors.tooltipDot} />
-                                                    )}
-                                                />
-                                            )}
-                                        </Cell> : <Cell key={`cell-men-${index}`} fill={colors.barMen} />
+                                        <Cell
+                                            key={`cell-men-${index}`}
+                                            fill={colors.barMen}
+                                            // 3. Highlight on legend interaction
+                                            opacity={activeLegend === null || activeLegend === "men" ? 1 : 0.3}
+                                        />
+                                    ))}
+                                    {/* Dot for peak bar, visible on hover */}
+                                    {peakBarHoverState?.active && chartData.find(entry => entry.age === peakAgeGroup)?.men === peakBarMenValue && (
+                                        <LabelList
+                                            dataKey="men"
+                                            position="top"
+                                            content={(props) => {
+                                                const { x, y, width } = props as any;
+                                                // Only render for the peak bar
+                                                if (chartData[props.index as number]?.age === peakAgeGroup) {
+                                                    return <circle cx={x + width / 2} cy={y - 5} r={3.5} fill={colors.tooltipDot} />;
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                    )}
+                                </Bar>
+                                <Bar dataKey="women" name="Women" radius={[4, 4, 0, 0]} barSize={8}>
+                                    {chartData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-women-${index}`}
+                                            fill={colors.barWomen}
+                                            // 3. Highlight on legend interaction
+                                            opacity={activeLegend === null || activeLegend === "women" ? 1 : 0.3}
+                                        />
                                     ))}
                                 </Bar>
-                                <Bar dataKey="women" name="Women" fill={colors.barWomen} radius={[4, 4, 0, 0]} barSize={8} />
                             </BarChart>
                         </ResponsiveContainer>
                     </motion.div>
                 </div>
 
-                {/* Legend */}
                 <div className="flex justify-center items-center gap-6 mt-4 pt-2">
-                    <div className="flex items-center gap-1.5">
-                        <span className="relative flex h-2.5 w-2.5">
-                            <span className="absolute inset-0 rounded-full" style={{ backgroundColor: colors.barMen }}></span>
-                            <span className="absolute -inset-0.5 rounded-full border" style={{ borderColor: colors.barMen }}></span>
-                        </span>
+                    {/* 3. Legend interaction */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-1.5 p-1 h-auto rounded-md ${activeLegend === "men" ? "bg-gray-700/50" : ""}`}
+                        onClick={() => handleLegendClick("men")}
+                        style={{ opacity: activeLegend === null || activeLegend === "men" ? 1 : 0.5 }}
+                    >
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.barMen }}></span>
                         <span className="text-xs" style={{ color: colors.textSecondary }}>Men</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="relative flex h-2.5 w-2.5">
-                            <span className="absolute inset-0 rounded-full" style={{ backgroundColor: colors.barWomen }}></span>
-                            <span className="absolute -inset-0.5 rounded-full border" style={{ borderColor: colors.barWomen }}></span>
-                        </span>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-1.5 p-1 h-auto rounded-md ${activeLegend === "women" ? "bg-gray-700/50" : ""}`}
+                        onClick={() => handleLegendClick("women")}
+                        style={{ opacity: activeLegend === null || activeLegend === "women" ? 1 : 0.5 }}
+                    >
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.barWomen }}></span>
                         <span className="text-xs" style={{ color: colors.textSecondary }}>Women</span>
-                    </div>
+                    </Button>
                 </div>
             </CardContent>
         </Card>

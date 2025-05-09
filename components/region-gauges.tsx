@@ -16,7 +16,7 @@ export function RegionGauges() {
   return (
     <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10">
           {regions.map((region) => (
             <RegionGauge key={region.name} region={region} />
           ))}
