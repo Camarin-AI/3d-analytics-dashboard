@@ -99,7 +99,7 @@ export function SkuDetails() {
       }}
     >
       <CardHeader className="flex flex-row items-center justify-between p-0 mb-6">
-        <CardTitle className="text-3xl font-light tracking-wide" style={{ color: colors.textPrimary }}>
+        <CardTitle className="text-2xl font-light font-sans tracking-wide" style={{ color: colors.textPrimary }}>
           SKU Details
         </CardTitle>
         <div className="flex items-center gap-3">
