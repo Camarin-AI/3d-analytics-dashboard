@@ -6,52 +6,98 @@ import Link from "next/link";
 import Image from "next/image";
 // Import usePathname hook
 import { usePathname } from 'next/navigation';
-import { Home, BarChart2, Package, LineChart, LogOut } from "lucide-react";
+import { Home, BarChart2, Package, LineChart, LogOut, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export function Sidebar() {
   // Get the current path
   const pathname = usePathname();
+  // State for controlling sidebar collapse
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  // State to track screen size
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Handle window resize and set mobile state
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setIsCollapsed(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
-    <div
-      className="
-        w-64 min-h-screen bg-[#18181B] p-6 flex flex-col text-white relative
-        rounded-tr-2xl rounded-br-2xl
-        /* sidebar outer glow with a fade at left/right */
-        shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(255,255,255,0.08)]
-      "
-    >
-      {/* optional gradient‐mask overlay to softly fade that halo on the far left & right */}
+    <>
+      {/* Hamburger menu toggle button - visible only on mobile */}
+      <button 
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="md:hidden fixed top-4 left-4 z-30 bg-zinc-800 p-2 rounded-md text-white"
+        aria-label={isCollapsed ? "Open menu" : "Close menu"}
+      >
+        {isCollapsed ? <Menu size={24} /> : <X size={24} />}
+      </button>
+
       <div
-        className="pointer-events-none absolute inset-0 rounded-tr-2xl rounded-br-2xl"
-        style={{
-          background:
-            "linear-gradient(to right, rgba(24,24,27,1) 0%, rgba(24,24,27,0) 10%, rgba(24,24,27,0) 90%, rgba(24,24,27,1) 100%)",
-        }}
-      />
-
-      <div className="mb-10 mt-2 relative z-10">
-        <Image
-          src="/camarinlogo.svg"
-          alt="Camarin Logo"
-          width={120}
-          height={28}
+        className={`
+          ${isMobile ? (isCollapsed ? "translate-x-[-100%]" : "translate-x-0") : "translate-x-0"}
+          w-64 min-h-screen bg-[#18181B] p-6 flex flex-col text-white relative
+          rounded-tr-2xl rounded-br-2xl
+          shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(255,255,255,0.08)]
+          transition-transform duration-300 ease-in-out
+          ${isMobile ? "fixed top-0 left-0 z-20" : ""}
+        `}
+      >
+        {/* optional gradient‐mask overlay to softly fade that halo on the far left & right */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-tr-2xl rounded-br-2xl"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(24,24,27,1) 0%, rgba(24,24,27,0) 10%, rgba(24,24,27,0) 90%, rgba(24,24,27,1) 100%)",
+          }}
         />
+
+        <div className="mb-10 mt-2 relative z-10">
+          <Image
+            src="/camarinlogo.svg"
+            alt="Camarin Logo"
+            width={120}
+            height={28}
+          />
+        </div>
+
+        {/* Make NavItems active state dynamic */}
+        <nav className="flex-1 space-y-2 relative z-10">
+          <NavItem href="/" icon={<Home size={20} />} label="Dashboard" active={pathname === '/'} />
+          <NavItem href="/sales" icon={<BarChart2 size={20} />} label="Sales" active={pathname === '/sales'} />
+          <NavItem href="/sku" icon={<Package size={20} />} label="SKU" active={pathname === '/sku'} />
+          <NavItem href="/insights" icon={<LineChart size={20} />} label="Insights" active={pathname === '/insights'} />
+        </nav>
+
+        <div className="mt-auto pt-4 relative z-10">
+          {/* Logout might not need an active state, but you can add it if needed */}
+          <NavItem href="/logout" icon={<LogOut size={20} />} label="Logout" active={pathname === '/logout'} />
+        </div>
       </div>
 
-      {/* Make NavItems active state dynamic */}
-      <nav className="flex-1 space-y-2 relative z-10">
-        <NavItem href="/" icon={<Home size={20} />} label="Dashboard" active={pathname === '/'} />
-        <NavItem href="/sales" icon={<BarChart2 size={20} />} label="Sales" active={pathname === '/sales'} />
-        <NavItem href="/sku" icon={<Package size={20} />} label="SKU" active={pathname === '/sku'} />
-        <NavItem href="/insights" icon={<LineChart size={20} />} label="Insights" active={pathname === '/insights'} />
-      </nav>
-
-      <div className="mt-auto pt-4 relative z-10">
-        {/* Logout might not need an active state, but you can add it if needed */}
-        <NavItem href="/logout" icon={<LogOut size={20} />} label="Logout" active={pathname === '/logout'} />
-      </div>
-    </div>
+      {/* Overlay backdrop for mobile, shown when sidebar is open */}
+      {isMobile && !isCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-10"
+          onClick={() => setIsCollapsed(true)}
+          aria-hidden="true"
+        />
+      )}
+    </>
   );
 }
 
