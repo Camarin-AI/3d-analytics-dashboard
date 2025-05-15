@@ -151,7 +151,7 @@ export function SalesOverview() {
                         </span>
                         <div className="flex flex-col items-start text-[10px] leading-tight">
                             <div className="flex items-center font-medium" style={{ color: kpiData[0].trendDirection === "up" ? colors.trendUp : colors.trendDown }}>
-                                <Image src={kpiData[0].trendDirection === "up" ? "/uparrow.png" : "/downarrow.png"} alt="Trend" width={8} height={8} className="mr-0.5"/>
+                                <Image src={kpiData[0].trendDirection === "up" ? "/upArrow.png" : "/downArrow.png"} alt="Trend" width={8} height={8} className="mr-0.5"/>
                                 +{kpiData[0].trend}%
                             </div>
                             <span style={{ color: colors.textMuted }}>{kpiData[0].trendLabel}</span>
