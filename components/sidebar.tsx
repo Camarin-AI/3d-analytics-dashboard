@@ -4,35 +4,38 @@
 import type React from "react";
 import Link from "next/link";
 import Image from "next/image";
-// Import usePathname hook
 import { usePathname } from 'next/navigation';
 import { Home, BarChart2, Package, LineChart, LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Sidebar() {
-  // Get the current path
   const pathname = usePathname();
-  // State for controlling sidebar collapse
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  // State to track screen size
-  const [isMobile, setIsMobile] = useState(false);
+  // FIX 2: Initialize isMobile based on window presence for server-side rendering safety
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  // FIX 2: Default isCollapsed to true if mobile.
+  const [isCollapsed, setIsCollapsed] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
 
-  // Handle window resize and set mobile state
+
   useEffect(() => {
+    const checkMobile = () => window.innerWidth < 768;
+
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsCollapsed(false);
+      const mobile = checkMobile();
+      setIsMobile(mobile);
+      if (!mobile) { // Desktop
+        setIsCollapsed(false); // Always open on desktop
+      } else {
+        // On mobile, keep current state unless it's the initial load scenario
+        // The initial load is handled by the useState default
       }
     };
 
-    // Set initial state
-    handleResize();
-    
-    // Add event listener
+    // Set initial state correctly after mount
+    const initialMobile = checkMobile();
+    setIsMobile(initialMobile);
+    setIsCollapsed(initialMobile); // Collapse by default on initial mobile load
+
     window.addEventListener('resize', handleResize);
-    
-    // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -44,7 +47,8 @@ export function Sidebar() {
         className="md:hidden fixed top-4 left-4 z-30 bg-zinc-800 p-2 rounded-md text-white"
         aria-label={isCollapsed ? "Open menu" : "Close menu"}
       >
-        {isCollapsed ? <Menu size={24} /> : <X size={24} />}
+        {/* FIX 2: If mobile and collapsed, show Menu icon to open. Otherwise (mobile and open), show X. */}
+        {isMobile && isCollapsed ? <Menu size={24} /> : isMobile && !isCollapsed ? <X size={24} /> : null}
       </button>
 
       <div
@@ -57,7 +61,6 @@ export function Sidebar() {
           ${isMobile ? "fixed top-0 left-0 z-20" : ""}
         `}
       >
-        {/* optional gradient‐mask overlay to softly fade that halo on the far left & right */}
         <div
           className="pointer-events-none absolute inset-0 rounded-tr-2xl rounded-br-2xl"
           style={{
@@ -75,7 +78,6 @@ export function Sidebar() {
           />
         </div>
 
-        {/* Make NavItems active state dynamic */}
         <nav className="flex-1 space-y-2 relative z-10">
           <NavItem href="/" icon={<Home size={20} />} label="Dashboard" active={pathname === '/'} />
           <NavItem href="/sales" icon={<BarChart2 size={20} />} label="Sales" active={pathname === '/sales'} />
@@ -84,7 +86,6 @@ export function Sidebar() {
         </nav>
 
         <div className="mt-auto pt-4 relative z-10">
-          {/* Logout might not need an active state, but you can add it if needed */}
           <NavItem href="/logout" icon={<LogOut size={20} />} label="Logout" active={pathname === '/logout'} />
         </div>
       </div>
@@ -92,7 +93,7 @@ export function Sidebar() {
       {/* Overlay backdrop for mobile, shown when sidebar is open */}
       {isMobile && !isCollapsed && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-10"
+          className="fixed inset-0 bg-black bg-opacity-50 z-10" // z-10 to be below sidebar (z-20)
           onClick={() => setIsCollapsed(true)}
           aria-hidden="true"
         />
@@ -105,48 +106,40 @@ interface NavItemProps {
   href: string;
   icon: React.ReactNode;
   label: string;
-  active?: boolean; // Keep this optional
+  active?: boolean; 
 }
 
-// No changes needed in NavItem component itself
 function NavItem({ href, icon, label, active }: NavItemProps) {
   return (
     <Link href={href} className="relative block" passHref>
-      {/* This span creates the blurred background effect */}
       {active && (
         <span
-          aria-hidden="true" // Better for accessibility
-          className="absolute inset-y-0 left-0 w-full rounded-l-full pointer-events-none" // Added pointer-events-none
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 w-full rounded-l-full pointer-events-none"
           style={{
             background:
               "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 80%)",
             filter: "blur(12px)",
-            // You might want to add a slight z-index if layering becomes an issue, e.g., zIndex: -1
           }}
         />
       )}
-
-      {/* Using <a> tag here ensures styles apply correctly, especially with the glow effect */}
-      <div // Changed from <a> to <div> as Link handles the anchor tag itself. Use div for styling container.
+      <div
         className={`
-          relative flex items-center gap-3 px-4 py-2.5 transition-colors rounded-lg // Base styles apply to all, rounded-lg by default
+          relative flex items-center gap-3 px-4 py-2.5 transition-colors rounded-lg
           ${
             active
               ? `
                 bg-[#3F3F46]
                 text-white font-medium
-                rounded-l-full rounded-r-none // Override rounding for active state
-                /* crisp white edge glow */
+                rounded-l-full rounded-r-none 
                 shadow-[0_0_4px_#fff,0_0_8px_#fff]
               `
               : `
                 text-gray-400 hover:text-gray-100 hover:bg-[#27272A]
-                // Keep rounded-lg for non-active items
               `
           }
         `}
       >
-        {/* Ensure icon and text are above the potential blur span if z-index issues arise */}
         <span className="relative z-10">{icon}</span>
         <span className="relative z-10 text-sm">{label}</span>
       </div>

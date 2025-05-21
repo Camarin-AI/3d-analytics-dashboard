@@ -20,10 +20,12 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-10 w-[280px] justify-start text-left font-normal bg-[#27272A] border border-transparent text-gray-300 hover:border-[#4F4F52] focus:bg-[#1F1F22] focus:border-[#4F4F52] focus:ring-0 rounded-md placeholder:text-gray-500"
+          className="h-10 w-full sm:w-[280px] flex justify-center text-center font-normal bg-[#27272A] border border-transparent text-gray-300 hover:border-[#4F4F52] focus:bg-[#1F1F22] focus:border-[#4F4F52] focus:ring-0 rounded-md placeholder:text-gray-500"
         >
-          <Calendar className="mr-2 h-4 w-4" />
-          {format(date.from, "d 'Jan', yyyy")} - {format(date.to, "d 'Jan', yyyy")}
+          <Calendar className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="truncate"> {/* To prevent text overflow on very small button widths */}
+            {format(date.from, "d MMM, yyyy")} - {format(date.to, "d MMM, yyyy")}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 bg-[#1A1A1A] border-[#2A2A2A]" align="end">
