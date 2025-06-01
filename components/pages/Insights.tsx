@@ -4,9 +4,9 @@ import { useState } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { KpiCards } from "@/components/kpi-cards"
-import { RegionGauges } from "@/components/region-gauges"
-import { RegionAnalytics } from "@/components/region-analytics"
-import { CustomerVolumeAge } from "@/components/customer-volume-age"
+import { RegionGauges } from "@/components/insights/region-gauges"
+import { RegionAnalytics } from "@/components/insights/region-analytics"
+import { CustomerVolumeAge } from "@/components/insights/customer-volume-age"
 import { Search } from "@/components/search"
 import { DateRangePicker } from "@/components/date-range-picker"; // Changed import
 

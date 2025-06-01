@@ -1,4 +1,4 @@
-import { Insights } from "@/components/Insights"
+import { Insights } from "@/components/pages/Insights"
 
 export default function InsightsPage() {
     return <Insights />

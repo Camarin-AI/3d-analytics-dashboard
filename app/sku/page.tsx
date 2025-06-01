@@ -1,4 +1,4 @@
-import { SkuAnalytics } from "@/components/sku-analytics"
+import { SkuAnalytics } from "@/components/pages/sku-analytics"
 
 export default function SKU() {
   return <SkuAnalytics />
