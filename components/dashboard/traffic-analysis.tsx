@@ -9,7 +9,15 @@ import {
   Cell,
 } from "recharts"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { useApiData } from "@/hooks/use-api-data";
+import { TrafficAnalysisData } from "@/lib/data-service";
 
+interface TrafficAnalysisProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
 const deviceData = [
   { name: "Laptop & PC",    value: 70, color: "#1E3A8A" },
   { name: "Mobile Phones",  value: 20, color: "#F59E0B" },
@@ -49,13 +57,28 @@ const renderCustomizedLabel = ({
   )
 }
 
-export function TrafficAnalysis() {
+export function TrafficAnalysis({ dateRange }: TrafficAnalysisProps) {
+  const { data: trafficData, loading, error } = useApiData<TrafficAnalysisData>({
+    endpoint: 'traffic-analysis',
+    dateRange
+  });
   const [activeTab, setActiveTab] = useState<"device" | "browser">("device")
   const [activeSeg, setActiveSeg] = useState<string | null>(null)
 
-  // pick data set
+  // if (loading) {
+  //   return <TrafficAnalysisSkeleton />;
+  // }
+
+  if (error) {
+    console.error('Traffic Analysis error:', error);
+    return <div className="text-red-500">Error loading traffic analysis data</div>;
+  }
+
+  if (!trafficData) {
+    return <div className="text-gray-500">No traffic analysis data available</div>;
+  }
+
   const base = activeTab === "device" ? deviceData : browserData
-  // filter if legend clicked
   const pieData = activeSeg ? base.filter((d) => d.name === activeSeg) : base
 
   return (

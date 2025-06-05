@@ -31,16 +31,16 @@ export function Dashboard() {
 
         <Search />
 
-        <KpiCards />
+        <KpiCards dateRange={dateRange} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <SalesOverview />
-          <TrafficAnalysis />
+          <SalesOverview dateRange={dateRange} />
+          <TrafficAnalysis dateRange={dateRange} />
         </div>
 
         <div className="mt-6 space-y-6">
-          <WeeklyVisits />
-          <WeeklyVisitors />
+          <WeeklyVisits dateRange={dateRange} />
+          <WeeklyVisitors dateRange={dateRange} />
         </div>
       </main>
     </div>

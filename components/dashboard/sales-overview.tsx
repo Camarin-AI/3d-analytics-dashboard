@@ -6,8 +6,16 @@ import { MoreHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image"; // For up/down arrow images
-
+import { useApiData } from "@/hooks/use-api-data";
+import { SalesOverviewData } from "@/lib/data-service";
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
+
+interface SalesOverviewProps {
+    dateRange: {
+      from: Date;
+      to: Date;
+    };
+  }
 
 // --- Color Palette (Based on Target Wireframe) ---
 const colors = {

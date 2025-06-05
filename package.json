@@ -75,9 +75,12 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "pg": "^8.16.0",
     "postcss": "^8",
+    "swr": "^2.3.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }

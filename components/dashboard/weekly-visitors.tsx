@@ -17,6 +17,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { DateRangePicker } from "@/components/date-range-picker"
+import { useApiData } from "@/hooks/use-api-data"
+import { WeeklyVisitorsData } from "@/lib/data-service"
 
 const data = [
   { day: 1, unique: 40000, total: 60000 },
@@ -28,33 +30,69 @@ const data = [
   { day: 7, unique: 35000, total: 65000 },
 ]
 
-export function WeeklyVisitors() {
-  // Stubbed date range
-  const [range] = useState({
-    from: new Date(2025, 0, 1),
-    to:   new Date(2025, 0, 7),
-  })
+interface WeeklyVisitorsProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+  onDateChange: (newRange: { from: Date; to: Date }) => void;
+}
+function WeeklyVisitorsSkeleton() {
+    return (
+      <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="h-6 bg-gray-700 rounded w-32 animate-pulse"></div>
+          <div className="flex items-center gap-2">
+            <div className="h-8 bg-gray-700 rounded w-48 animate-pulse"></div>
+            <div className="h-5 w-5 bg-gray-700 rounded animate-pulse"></div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] bg-gray-700 rounded animate-pulse mb-4"></div>
+          <div className="flex justify-center gap-8">
+            <div className="h-4 bg-gray-700 rounded w-24 animate-pulse"></div>
+            <div className="h-4 bg-gray-700 rounded w-24 animate-pulse"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  // which series is highlighted?
-  // null = both shown equally
+export function WeeklyVisitors({ dateRange, onDateChange }: WeeklyVisitorsProps) {
+  const { data: visitorsData, loading, error } = useApiData<WeeklyVisitorsData>({
+    endpoint: 'weekly-visitors',
+    dateRange
+  });
+
   const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique")
 
-  // find the peak entry for the active series
   const peak = useMemo(() => {
+    if (!visitorsData?.data || visitorsData.data.length === 0) return { entry: { day: 1, unique: 0, total: 0 }, value: 0 };
     const key = activeKey || "unique"
-    let max = -Infinity, entry = data[0]
-    data.forEach(d => {
+    let max = -Infinity, entry = visitorsData.data[0]
+    visitorsData.data.forEach(d => {
       if (d[key] > max) {
         max = d[key]; entry = d
       }
     })
     return { entry, value: entry[activeKey || "unique"] }
-  }, [activeKey])
+  }, [activeKey, visitorsData])
 
-  const [dateRange, setDateRange] = useState({
-    from: new Date(2025, 0, 1), // Jan 1, 2025
-    to: new Date(2025, 0, 7), // Jan 7, 2025
-  })
+  if (loading) {
+    return <WeeklyVisitorsSkeleton />;
+  }
+
+  if (error) {
+    console.error('Weekly Visitors error:', error);
+    return <div className="text-red-500">Error loading weekly visitors data</div>;
+  }
+
+  if (!visitorsData) {
+    return <div className="text-gray-500">No weekly visitors data available</div>;
+  }
+
+
+
 
   return (
     <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
@@ -70,13 +108,13 @@ export function WeeklyVisitors() {
                 className="h-8 bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white"
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                {format(range.from, "d MMM, yyyy")} – {format(range.to, "d MMM, yyyy")}
+                {dateRange.from && dateRange.to ? `${format(dateRange.from, "d MMM, yyyy")} – ${format(dateRange.to, "d MMM, yyyy")}` : "Select Date"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-[#1A1A1A] border-[#2A2A2A]" align="end">
               {/* Calendar UI goes here */}
               <div>
-              <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+              <DateRangePicker date={dateRange} onDateChange={onDateChange} />
               </div>
             </PopoverContent>
           </Popover>
@@ -111,7 +149,7 @@ export function WeeklyVisitors() {
             className="h-full"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
+              <LineChart data={visitorsData.data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
                 <CartesianGrid stroke="#2A2A2A" strokeDasharray="3 3" vertical={false} />
 
                 <XAxis
