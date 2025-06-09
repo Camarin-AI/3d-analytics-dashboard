@@ -39,8 +39,8 @@ export function Dashboard() {
         </div>
 
         <div className="mt-6 space-y-6">
-          <WeeklyVisits dateRange={dateRange} />
-          <WeeklyVisitors dateRange={dateRange} />
+          <WeeklyVisits />
+          <WeeklyVisitors />
         </div>
       </main>
     </div>

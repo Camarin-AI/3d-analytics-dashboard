@@ -5,8 +5,9 @@ import type React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from 'next/navigation';
-import { Home, BarChart2, Package, LineChart, LogOut, Menu, X } from "lucide-react";
+import { Home, BarChart2, Package, LineChart, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { UserButton } from '@clerk/nextjs'
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -85,8 +86,8 @@ export function Sidebar() {
           <NavItem href="/insights" icon={<LineChart size={20} />} label="Insights" active={pathname === '/insights'} />
         </nav>
 
-        <div className="mt-auto pt-4 relative z-10">
-          <NavItem href="/logout" icon={<LogOut size={20} />} label="Logout" active={pathname === '/logout'} />
+        <div className="mt-auto pt-4 relative z-10 flex justify-center">
+          <UserButton afterSignOutUrl="/auth" appearance={{ elements: { userButtonAvatarBox: 'w-8 h-8', userButtonPopoverCard: 'bg-[#18181B] text-white' } }} />
         </div>
       </div>
 

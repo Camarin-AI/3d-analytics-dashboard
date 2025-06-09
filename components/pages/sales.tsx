@@ -21,10 +21,8 @@ export function SalesAnalytics() {
   return (
     <div className="flex min-h-screen bg-[#121212] text-white">
       <Sidebar />
-
       <main className="flex-1 p-4 md:p-8 w-full overflow-x-hidden">
         <Header />
-
         <div className="flex flex-col md:flex-row items-center justify-between mt-6 mb-8 gap-4 md:gap-0">
           <h1 className="text-3xl md:text-4xl font-light font-sans text-white">Sales Analytics</h1>
           <div className="w-full md:w-auto flex justify-center md:justify-end">
@@ -34,23 +32,23 @@ export function SalesAnalytics() {
 
         <Search />
 
-        <KpiCards />
+        <KpiCards dateRange={dateRange} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <TotalSales />
-          <TrafficAnalysis />
+          <TotalSales dateRange={dateRange} />
+          <TrafficAnalysis dateRange={dateRange} />
         </div>
 
         <div className="mt-6">
           <h2 className="text-2xl font-light font-sans text-white mb-4">Comparative Analysis</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ReturnRates />
-            <ConversionRates />
+            <ReturnRates dateRange={dateRange} />
+            <ConversionRates dateRange={dateRange} />
           </div>
         </div>
 
         <div className="mt-6">
-          <EmbedAssistedRevenue />
+          <EmbedAssistedRevenue dateRange={dateRange} />
         </div>
       </main>
     </div>

@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { format } from "date-fns";
+import { useApiData } from "@/hooks/use-api-data";
+import type { SKUData } from '@/lib/data-service';
 
 // Colors remain largely the same, slight tweaks if necessary based on re-evaluation
 const colors = {
@@ -32,7 +34,7 @@ const colors = {
   iconLowEngagement: "#60A5FA", // Blue
 };
 
-const skuData = {
+const fallbackSkuData: SKUData = {
   name: "Diamond Cut Earrings",
   id: "ID140001",
   stock: "Available",
@@ -44,7 +46,7 @@ const skuData = {
   dailyAverage: 1650,
   conversionRate: 71,
   averageCTR: 2.3,
-  imageSrc: "/diamond-earrings.png", 
+  imageSrc: "/diamond-earrings.png",
 };
 
 // Custom SVG Icon for High CTR (Target-like) - from previous version
@@ -74,20 +76,24 @@ const LowEngagementZzIcon = ({ color = colors.iconLowEngagement, size = 22 }) =>
   </svg>
 );
 
-const detailItems = [
-    { key: "name", label: "SKU Name:", value: skuData.name, valueColor: colors.textPrimary, valueFontWeight: "font-medium", multilineValue: true, maxWidth: "max-w-[170px]" }, // max-width for SKU Name to wrap
+export function SkuDetails() {
+  const [dateRange] = useState({
+    from: new Date(2025, 0, 1),
+    to: new Date(2025, 0, 7),
+  });
+  const { data, loading, error } = useApiData<SKUData>({ endpoint: 'sku-data', dateRange });
+  const skuData: SKUData = (error ? fallbackSkuData : (data || fallbackSkuData));
+  const isFallback = error;
+
+  const detailItems = [
+    { key: "name", label: "SKU Name:", value: skuData.name, valueColor: colors.textPrimary, valueFontWeight: "font-medium", multilineValue: true, maxWidth: "max-w-[170px]" },
     { key: "id", label: "SKU ID:", value: skuData.id, valueColor: colors.textPrimary, valueFontWeight: "font-medium" },
     { key: "stock", label: "Stock :", value: skuData.stock, valueColor: colors.statusAvailable, valueFontWeight: "font-medium" },
     { key: "listed", label: "Listed :", value: skuData.listed, valueColor: colors.statusAvailable, valueFontWeight: "font-medium" },
     { key: "digitised", label: "Digitised :", value: skuData.digitised, valueColor: colors.statusAvailable, valueFontWeight: "font-medium" },
   ];
 
-
-export function SkuDetails() {
-  const [dateRange] = useState({
-    from: new Date(2025, 0, 1),
-    to: new Date(2025, 0, 7),
-  });
+  if (loading) return <div className="text-gray-400">Loading SKU details...</div>;
 
   return (
     <Card
@@ -106,7 +112,7 @@ export function SkuDetails() {
           <Button
             variant="outline"
             size="sm"
-            className="h-9 px-3.5 rounded-lg text-sm font-normal border focus:outline-none focus:ring-1 focus:ring-gray-500 hover:bg-[#38383d]" // text-sm for date
+            className="h-9 px-3.5 rounded-lg text-sm font-normal border focus:outline-none focus:ring-1 focus:ring-gray-500 hover:bg-[#38383d]"
             style={{
               backgroundColor: colors.dateRangeButtonBg,
               borderColor: colors.dateRangeButtonBorder,
@@ -117,10 +123,18 @@ export function SkuDetails() {
             {format(dateRange.from, "dd, MMM, yyyy")} - {format(dateRange.to, "dd, MMM, yyyy")}
           </Button>
           <button className="focus:outline-none p-1" style={{ color: colors.textSecondary }}>
-            <MoreHorizontal size={24} /> {/* Slightly larger dots icon */}
+            <MoreHorizontal size={24} />
           </button>
         </div>
       </CardHeader>
+
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
 
       <CardContent className="p-0 flex-grow flex flex-col">
         <div className="flex flex-col md:flex-row gap-x-6 lg:gap-x-8 mb-6"> {/* Adjusted gap */}
@@ -136,7 +150,7 @@ export function SkuDetails() {
               <Image
                 src={skuData.imageSrc}
                 alt={skuData.name}
-                width={300} // Image can be larger, object-contain will fit it
+                width={300}
                 height={300}
                 className="object-contain"
                 priority

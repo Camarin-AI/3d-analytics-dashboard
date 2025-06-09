@@ -30,13 +30,6 @@ const data = [
   { day: 7, unique: 35000, total: 65000 },
 ]
 
-interface WeeklyVisitorsProps {
-  dateRange: {
-    from: Date;
-    to: Date;
-  };
-  onDateChange: (newRange: { from: Date; to: Date }) => void;
-}
 function WeeklyVisitorsSkeleton() {
     return (
       <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
@@ -58,12 +51,15 @@ function WeeklyVisitorsSkeleton() {
     );
   }
 
-export function WeeklyVisitors({ dateRange, onDateChange }: WeeklyVisitorsProps) {
+export function WeeklyVisitors() {
+  const [dateRange, setDateRange] = useState({
+    from: new Date(2025, 0, 1),
+    to: new Date(2025, 0, 7),
+  });
   const { data: visitorsData, loading, error } = useApiData<WeeklyVisitorsData>({
     endpoint: 'weekly-visitors',
     dateRange
   });
-
   const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique")
 
   const peak = useMemo(() => {
@@ -91,9 +87,6 @@ export function WeeklyVisitors({ dateRange, onDateChange }: WeeklyVisitorsProps)
     return <div className="text-gray-500">No weekly visitors data available</div>;
   }
 
-
-
-
   return (
     <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -112,9 +105,8 @@ export function WeeklyVisitors({ dateRange, onDateChange }: WeeklyVisitorsProps)
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-[#1A1A1A] border-[#2A2A2A]" align="end">
-              {/* Calendar UI goes here */}
               <div>
-              <DateRangePicker date={dateRange} onDateChange={onDateChange} />
+                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
               </div>
             </PopoverContent>
           </Popover>

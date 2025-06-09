@@ -16,39 +16,53 @@ import { format } from "date-fns"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-
-const data = [
-  { day: 1, unique: 40000, total: 60000 },
-  { day: 2, unique: 63480, total: 85000 },
-  { day: 3, unique: 30000, total: 58000 },
-  { day: 4, unique: 72000, total: 90000 },
-  { day: 5, unique: 55000, total: 88000 },
-  { day: 6, unique: 48000, total: 92000 },
-  { day: 7, unique: 35000, total: 65000 },
-]
+import { DateRangePicker } from "../date-range-picker"
+import { useApiData } from "@/hooks/use-api-data"
 
 export function WeeklyVisits() {
-  // Stubbed date range
-  const [range] = useState({
+  const [dateRange, setDateRange] = useState({
     from: new Date(2025, 0, 1),
-    to:   new Date(2025, 0, 7),
-  })
-
-  // which series is highlighted?
-  // null = both shown equally
+    to: new Date(2025, 0, 7),
+  });
+  const { data: visitsData, loading, error } = useApiData<{ data: { day: number; unique: number; total: number }[] }>({
+    endpoint: 'weekly-visits',
+    dateRange
+  });
+  const fallback = {
+    data: [
+      { day: 1, unique: 40000, total: 60000 },
+      { day: 2, unique: 63480, total: 85000 },
+      { day: 3, unique: 30000, total: 58000 },
+      { day: 4, unique: 72000, total: 90000 },
+      { day: 5, unique: 55000, total: 88000 },
+      { day: 6, unique: 48000, total: 92000 },
+      { day: 7, unique: 35000, total: 65000 },
+    ]
+  };
+  const d = (error ? fallback : (visitsData || fallback));
   const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique")
 
-  // find the peak entry for the active series
   const peak = useMemo(() => {
+    if (!d?.data || d.data.length === 0) return { entry: { day: 1, unique: 0, total: 0 }, value: 0 };
     const key = activeKey || "unique"
-    let max = -Infinity, entry = data[0]
-    data.forEach(d => {
+    let max = -Infinity, entry = d.data[0]
+    d.data.forEach(d => {
       if (d[key] > max) {
         max = d[key]; entry = d
       }
     })
     return { entry, value: entry[activeKey || "unique"] }
-  }, [activeKey])
+  }, [activeKey, d])
+
+  if (loading) {
+    return <div className="text-gray-500">Loading weekly visits data...</div>;
+  }
+  if (!d) {
+    return <div className="text-gray-500">No weekly visits data available</div>;
+  }
+
+  // Show a subtle warning if fallback data is being used due to error
+  const isFallback = error;
 
   return (
     <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
@@ -64,11 +78,13 @@ export function WeeklyVisits() {
                 className="h-8 bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white"
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                {format(range.from, "d MMM, yyyy")} – {format(range.to, "d MMM, yyyy")}
+                {dateRange.from && dateRange.to ? `${format(dateRange.from, "d MMM, yyyy")} – ${format(dateRange.to, "d MMM, yyyy")}` : "Select Date"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-[#1A1A1A] border-[#2A2A2A]" align="end">
-              {/* Calendar UI goes here */}
+              <div>
+                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+              </div>
             </PopoverContent>
           </Popover>
 
@@ -77,6 +93,14 @@ export function WeeklyVisits() {
           </button>
         </div>
       </CardHeader>
+
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
 
       <CardContent>
         <div className="relative h-[300px]">
@@ -102,7 +126,7 @@ export function WeeklyVisits() {
             className="h-full"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
+              <LineChart data={d.data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
                 <CartesianGrid stroke="#2A2A2A" strokeDasharray="3 3" vertical={false} />
 
                 <XAxis

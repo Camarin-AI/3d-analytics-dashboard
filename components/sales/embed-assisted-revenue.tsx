@@ -17,44 +17,47 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { DateRangePicker } from "@/components/date-range-picker"
+import { useApiData } from "@/hooks/use-api-data"
+import { EmbedAssistedRevenueData } from "@/lib/data-service"
 
-const data = [
-  { day: 1, unique: 40000, total: 60000 },
-  { day: 2, unique: 63480, total: 85000 },
-  { day: 3, unique: 30000, total: 58000 },
-  { day: 4, unique: 72000, total: 90000 },
-  { day: 5, unique: 55000, total: 88000 },
-  { day: 6, unique: 48000, total: 92000 },
-  { day: 7, unique: 35000, total: 65000 },
-]
+interface EmbedAssistedRevenueProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
 
-export function EmbedAssistedRevenue() {
-  // Stubbed date range
-  const [range] = useState({
-    from: new Date(2025, 0, 1),
-    to:   new Date(2025, 0, 7),
-  })
-
-  // which series is highlighted?
-  // null = both shown equally
+export function EmbedAssistedRevenue({ dateRange: initialDateRange }: EmbedAssistedRevenueProps) {
+  const [dateRange, setDateRange] = useState(initialDateRange);
+  const { data, loading, error } = useApiData<EmbedAssistedRevenueData>({ endpoint: 'embed-assisted-revenue', dateRange })
+  const fallback = { data: [
+    { day: 1, unique: 40000, total: 60000 },
+    { day: 2, unique: 63480, total: 85000 },
+    { day: 3, unique: 30000, total: 58000 },
+    { day: 4, unique: 72000, total: 90000 },
+    { day: 5, unique: 55000, total: 88000 },
+    { day: 6, unique: 48000, total: 92000 },
+    { day: 7, unique: 35000, total: 65000 },
+  ] }
+  const d = (error ? fallback : (data || fallback))
   const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique")
-
-  // find the peak entry for the active series
   const peak = useMemo(() => {
+    if (!Array.isArray(d.data) || d.data.length === 0) {
+      return { entry: { day: 1, unique: 0, total: 0 }, value: 0 };
+    }
     const key = activeKey || "unique"
-    let max = -Infinity, entry = data[0]
-    data.forEach(d => {
+    let max = -Infinity, entry = d.data[0]
+    d.data.forEach(d => {
       if (d[key] > max) {
         max = d[key]; entry = d
       }
     })
     return { entry, value: entry[activeKey || "unique"] }
-  }, [activeKey])
+  }, [activeKey, d.data])
+  if (loading) return <div className="text-gray-400">Loading embed-assisted revenue...</div>
 
-  const [dateRange, setDateRange] = useState({
-    from: new Date(2025, 0, 1), // Jan 1, 2025
-    to: new Date(2025, 0, 7), // Jan 7, 2025
-  })
+  // Show a subtle warning if fallback data is being used due to error
+  const isFallback = error;
 
   return (
     <Card className="bg-[#1A1A1A] border-[#FFFFFF66] text-white">
@@ -70,13 +73,12 @@ export function EmbedAssistedRevenue() {
                 className="h-8 bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-white rounded-md"
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                {format(range.from, "d MMM, yyyy")} – {format(range.to, "d MMM, yyyy")}
+                {format(dateRange.from, "d MMM, yyyy")} – {format(dateRange.to, "d MMM, yyyy")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 bg-[#1A1A1A] border-[#2A2A2A]" align="end">
-              {/* Calendar UI goes here */}
               <div>
-              <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                <DateRangePicker date={dateRange} onDateChange={setDateRange} />
               </div>
             </PopoverContent>
           </Popover>
@@ -86,6 +88,14 @@ export function EmbedAssistedRevenue() {
           </button>
         </div>
       </CardHeader>
+
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
 
       <CardContent>
         <div className="relative h-[300px]">
@@ -111,7 +121,7 @@ export function EmbedAssistedRevenue() {
             className="h-full"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
+              <LineChart data={d.data} margin={{ top: 40, right: 30, left: 20, bottom: 10 }}>
                 <CartesianGrid stroke="#2A2A2A" strokeDasharray="3 3" vertical={false} />
 
                 <XAxis

@@ -419,6 +419,32 @@ export class DataService {
     );
   }
 
+  static async getWeeklyVisitsData(dateRange: DateRange): Promise<{ data: { day: number; unique: number; total: number }[] }> {
+    const dailyVisitsQuery = `
+      SELECT 
+        EXTRACT(DOW FROM bucket) as day,
+        0 as unique_visitors,
+        SUM(total_visits) as total_visitors
+      FROM daily_visits_summary 
+      WHERE bucket >= $1 AND bucket <= $2
+      GROUP BY EXTRACT(DOW FROM bucket)
+      ORDER BY day
+    `;
+    const result = await query(dailyVisitsQuery, [dateRange.from, dateRange.to]);
+    const data = result.rows.map(row => ({
+      day: Number(row.day) + 1,
+      unique: 0,
+      total: Number(row.total_visitors) || 0,
+    }));
+    // Fill missing days with zeros
+    const completeData = [];
+    for (let i = 1; i <= 7; i++) {
+      const existingDay = data.find(d => d.day === i);
+      completeData.push(existingDay || { day: i, unique: 0, total: 0 });
+    }
+    return { data: completeData };
+  }
+
   static async getRegionData(dateRange: DateRange): Promise<RegionData> {
     const regionSalesQuery = `
       SELECT 

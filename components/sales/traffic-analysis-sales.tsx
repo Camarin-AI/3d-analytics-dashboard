@@ -4,6 +4,8 @@ import { MoreHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import React from "react"; // Import React for fragment usage
+import { useApiData } from "@/hooks/use-api-data";
+import { TrafficAnalysisData } from "@/lib/data-service";
 
 // Data based on the image
 const chartData = [
@@ -30,7 +32,25 @@ const radius = 40;
 const circumference = 2 * Math.PI * radius; // Approx 251.2
 const strokeWidth = 18; // Wider stroke for the donut look
 
-export function TrafficAnalysis() {
+interface TrafficAnalysisProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
+
+export function TrafficAnalysis({ dateRange }: TrafficAnalysisProps) {
+  const { data, loading, error } = useApiData<TrafficAnalysisData>({ endpoint: 'traffic-analysis-sales', dateRange });
+  const fallback = { chartData: [
+    { name: "New Customers", value: 80, color: "#1E3A8A" },
+    { name: "Returning Customers", value: 20, color: "#F59E0B" },
+  ]};
+  const d = data || fallback;
+  if (loading) return <div className="text-gray-400">Loading traffic analysis...</div>;
+  if (error) return <div className="text-yellow-400">Showing fallback data (offline mode)</div>;
+  if (!Array.isArray(chartData) || chartData.length === 0) {
+    return <div className="text-gray-500">No traffic analysis data available</div>;
+  }
   let accumulatedAngle = -90; // Start angle (top)
 
   return (
