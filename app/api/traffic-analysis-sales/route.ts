@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { httpRequestDurationMicroseconds } from '@/lib/metrics';
+import logger from '@/lib/logger'; 
 
 export async function GET(request: NextRequest) {
+  const end = httpRequestDurationMicroseconds.startTimer();
+  const route = '/api/traffic-analysis-sales';
   // Parse date range from query params (optional, fallback to last 7 days)
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get('from');
@@ -39,8 +43,11 @@ export async function GET(request: NextRequest) {
       { name: "Returning Customers", value: Math.round((returningCustomers / total) * 100), color: "#F59E0B" },
     ] : fallback.deviceData;
 
+    logger.info('Successfully processed /api/traffic-analysis-sales');
     return NextResponse.json({ deviceData });
   } catch (e) {
+    logger.error('Traffic Analysis Sales API error:', e);
+    end({ route, status_code: 500, method: request.method });
     return NextResponse.json(fallback);
   }
 } 

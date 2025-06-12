@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useApiData } from "@/hooks/use-api-data";
 import { KPIData } from "@/lib/data-service";
-
+import logger from "@/lib/logger";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface KpiCardsProps {
@@ -25,7 +25,7 @@ export function KpiCards({ dateRange }: KpiCardsProps) {
   }
 
   if (error) {
-    console.error('KPI Cards error:', error);
+    logger.error('KPI Cards error:', error);
     return <div className="text-red-500">Error loading KPI data</div>;
   }
 

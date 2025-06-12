@@ -19,7 +19,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { DateRangePicker } from "@/components/date-range-picker"
 import { useApiData } from "@/hooks/use-api-data"
 import { WeeklyVisitorsData } from "@/lib/data-service"
-
+import logger from "@/lib/logger";
 const data = [
   { day: 1, unique: 40000, total: 60000 },
   { day: 2, unique: 63480, total: 85000 },
@@ -79,7 +79,7 @@ export function WeeklyVisitors() {
   }
 
   if (error) {
-    console.error('Weekly Visitors error:', error);
+    logger.error('Weekly Visitors error:', error);
     return <div className="text-red-500">Error loading weekly visitors data</div>;
   }
 

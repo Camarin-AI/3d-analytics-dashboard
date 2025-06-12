@@ -1,5 +1,6 @@
-// lib/db.ts
 import { Pool, PoolConfig, QueryResult } from 'pg';
+import { dbQueryDurationMicroseconds } from '@/lib/metrics';
+import logger from '@/lib/logger';
 
 let pool: Pool | null = null;
 
@@ -98,26 +99,31 @@ export async function getPool(): Promise<Pool> {
 
 function setupPoolEventHandlers(currentPool: Pool) {
   currentPool.on('error', (err) => {
-    console.error('Database pool error:', err);
+    logger.error('Database pool error:', err);
   });
   currentPool.on('connect', (client) => {
     client.on('error', (err) => {
-      console.error('Database client error:', err);
+      logger.error('Database client error:', err);
     });
   });
 }
 
 export async function query(text: string, params?: any[]): Promise<QueryResult<any>> {
+  const queryName = text.trim().split(' ')[0].toLowerCase(); 
+  const end = dbQueryDurationMicroseconds.startTimer({ query_name: queryName }); 
+
   const startTime = Date.now();
   const currentPool = await getPool();
   try {
     const result = await currentPool.query(text, params);
     const duration = Date.now() - startTime;
-    console.log('Query completed in', duration, 'ms. Rows returned:', result.rows.length);
+    logger.info(`Query completed in ${duration}ms. Rows returned: ${result.rows.length}`);
+    end(); 
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('Database query error after', duration, 'ms:', error);
+    logger.error(`Database query error after ${duration}ms: ${error}`, error);
+    end(); 
     throw new Error(`Database query failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
@@ -125,10 +131,10 @@ export async function query(text: string, params?: any[]): Promise<QueryResult<a
 export async function testConnection(): Promise<boolean> {
   try {
     const result = await query('SELECT NOW() as current_time, version() as db_version');
-    console.log('Database connection test successful:', result.rows[0]);
+    logger.info(`Database connection test successful: ${result.rows[0]}`);
     return true;
   } catch (error) {
-    console.error('Database connection test failed:', error);
+    logger.error('Database connection test failed:', error);
     return false;
   }
 }
@@ -137,6 +143,6 @@ export async function endPool() {
   if (pool) {
     await pool.end();
     pool = null;
-    console.log('Database pool closed');
+    logger.info('Database pool closed');
   }
 }

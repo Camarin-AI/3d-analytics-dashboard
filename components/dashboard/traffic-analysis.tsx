@@ -11,7 +11,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useApiData } from "@/hooks/use-api-data";
 import { TrafficAnalysisData } from "@/lib/data-service";
-
+import logger from "@/lib/logger";
 interface TrafficAnalysisProps {
   dateRange: {
     from: Date;
@@ -70,7 +70,7 @@ export function TrafficAnalysis({ dateRange }: TrafficAnalysisProps) {
   // }
 
   if (error) {
-    console.error('Traffic Analysis error:', error);
+    logger.error('Traffic Analysis error:', error);
     return <div className="text-red-500">Error loading traffic analysis data</div>;
   }
 

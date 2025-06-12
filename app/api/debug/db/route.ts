@@ -1,16 +1,21 @@
 // app/api/debug/db/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { DataService } from '@/lib/data-service';
+import { httpRequestDurationMicroseconds } from '@/lib/metrics';
+import logger from '@/lib/logger'; 
 
 export async function GET(request: NextRequest) {
+  const end = httpRequestDurationMicroseconds.startTimer();
+  const route = '/api/debug/db';
   try {
-    console.log('=== Database Debug Route ===');
+    logger.info('=== Database Debug Route ===');
     
     // Test basic connection
     const connectionTest = await DataService.testDatabaseConnection();
-    console.log('Connection test result:', connectionTest);
+    logger.info(`Connection test result: ${connectionTest}`);
     
     if (!connectionTest) {
+      end({ route, status_code: 500, method: request.method });
       return NextResponse.json({
         success: false,
         error: 'Database connection failed',
@@ -45,7 +50,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Debug API error:', error);
+    logger.error('Debug API error:', error);
+    end({ route, status_code: 500, method: request.method });
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

@@ -1,4 +1,6 @@
 import { query, testConnection } from './db';
+import { fallbackDataUsageCounter } from '@/lib/metrics';
+import logger from './logger';
 
 export interface DateRange {
   from: Date;
@@ -136,7 +138,7 @@ export class DataService {
     try {
       return await testConnection();
     } catch (error) {
-      console.error('Database connection test failed:', error);
+      logger.error('Database connection test failed:', error);
       return false;
     }
   }
@@ -150,8 +152,12 @@ export class DataService {
     try {
       return await queryFn();
     } catch (error) {
-      console.error(`${queryName} query failed:`, error);
-      console.warn(`Falling back to default data for ${queryName}`);
+      logger.error(`${queryName} query failed:`, error);
+      logger.warn(`Query failed, using fallback data for ${queryName}`, {
+        queryName,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      });
+      fallbackDataUsageCounter.inc({ query_name: queryName });
       return fallbackData;
     }
   }

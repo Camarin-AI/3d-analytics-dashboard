@@ -1,6 +1,15 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-export default clerkMiddleware();
+const isPublicRoute = createRouteMatcher([
+  '/auth(.*)', // The entire /auth path
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api/metrics', // Make sure Prometheus can access this
+]);
+
+export default clerkMiddleware((auth, req) => {
+  if (isPublicRoute(req)) return;
+});
 
 export const config = {
   matcher: [

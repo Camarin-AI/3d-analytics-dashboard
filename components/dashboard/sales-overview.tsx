@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { useApiData } from "@/hooks/use-api-data";
 import { SalesOverviewData } from "@/lib/data-service";
-
+import logger from "@/lib/logger";
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 interface SalesOverviewProps {
@@ -169,7 +169,7 @@ export function SalesOverview({ dateRange }: SalesOverviewProps) {
 
     // Error state with fallback data
     if (error) {
-        console.warn('Sales Overview API error, using fallback data:', error);
+        logger.warn('Sales Overview API error, using fallback data:');
     }
 
     return (

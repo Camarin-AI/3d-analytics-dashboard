@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DataService } from '@/lib/data-service';
+import { httpRequestDurationMicroseconds } from '@/lib/metrics';
+import logger from '@/lib/logger'; 
 
 export async function GET(request: NextRequest) {
+  const end = httpRequestDurationMicroseconds.startTimer();
+  const route = '/api/total-sales';
   try {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from');
     const to = searchParams.get('to');
 
     if (!from || !to) {
+      end({ route, status_code: 400, method: request.method });
+      logger.error('Total Sales API error: Date range parameters (from, to) are required', {
+        from,
+        to
+      });
       return NextResponse.json(
         { error: 'Date range parameters (from, to) are required' },
         { status: 400 }
@@ -20,9 +29,12 @@ export async function GET(request: NextRequest) {
     };
 
     const data = await DataService.getTotalSalesData(dateRange);
+    end({ route, status_code: 200, method: request.method });
+    logger.info('Successfully processed /api/total-sales');
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Total Sales API error:', error);
+    logger.error('Total Sales API error:', error);
+    end({ route, status_code: 500, method: request.method });
     return NextResponse.json(
       { error: 'Failed to fetch total sales data' },
       { status: 500 }
