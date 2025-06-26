@@ -266,3 +266,39 @@ SELECT add_continuous_aggregate_policy('daily_sales_summary',
     end_offset   => INTERVAL '1 day', -- Less frequent refresh might be okay for sales
     schedule_interval => INTERVAL '1 day');
 
+-- Ingestion Errors Table
+CREATE TABLE IF NOT EXISTS ingestion_errors (
+    error_id SERIAL PRIMARY KEY,
+    target_queue VARCHAR(255) NOT NULL,
+    event_payload JSONB,
+    error_message TEXT NOT NULL,
+    error_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    retry_count INTEGER DEFAULT 0,
+    processed_at TIMESTAMPTZ NULL -- Timestamp when/if reprocessed successfully
+);
+CREATE INDEX IF NOT EXISTS idx_ingestion_errors_queue_timestamp ON ingestion_errors(target_queue, error_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_ingestion_errors_processed_at ON ingestion_errors(processed_at NULLS FIRST);
+
+
+--ALTER Updates on Order table
+
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS ecommerce_order_id TEXT;
+
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_ecommerce_order_id_unique ON orders (ecommerce_order_id);
+CREATE INDEX IF NOT EXISTS idx_orders_ecommerce_id_search ON orders(ecommerce_order_id, order_date DESC);
+CREATE INDEX IF NOT EXISTS idx_orderitems_order_date_id ON order_items(order_date, order_id);
+CREATE INDEX IF NOT EXISTS idx_orderitems_sku_id ON order_items(sku_id);
+
+--ALTER Updates of adding CURRENT_TIMESTAMP to different relations 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE regions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_name_key;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_category_name_parent
+ON categories (name, (COALESCE(parent_category_id, -1)));
+

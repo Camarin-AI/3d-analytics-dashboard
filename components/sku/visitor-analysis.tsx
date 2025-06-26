@@ -4,6 +4,8 @@ import { MoreHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Instagram, Facebook, Zap as WhatsappIcon, Twitter as TikTokIcon } from "lucide-react"; 
+import { useApiData } from "@/hooks/use-api-data";
+import type { VisitorAnalysisData } from '@/lib/data-service';
 
 // --- Color Palette (Based on Target Image) ---
 const colors = {
@@ -35,7 +37,27 @@ const GoogleIcon = ({size = 18, color = colors.textSecondary }) => (
     </svg>
 );
 
+const fallbackData: VisitorAnalysisData = {
+  platforms: ["Instagram", "Google", "WhatsApp", "Facebook", "TikTok"],
+  days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  heatmapData: {
+    Instagram: [50, 120, 20, 400, 280, 150, 80],
+    Google: [80, 20, 150, 15, 180, 90, 60],
+    WhatsApp: [300, 10, 120, 160, 20, 70, 40],
+    Facebook: [100, 130, 8, 420, 10, 140, 50],
+    TikTok: [20, 80, 24, 380, 453, 290, 10],
+  },
+};
+
 export function VisitorAnalysis() {
+  const [dateRange] = useState({
+    from: new Date(2025, 0, 1),
+    to: new Date(2025, 0, 7),
+  });
+  const { data, loading, error } = useApiData<VisitorAnalysisData>({ endpoint: 'visitor-analysis', dateRange });
+  const d: VisitorAnalysisData = (error ? fallbackData : (data || fallbackData));
+  const isFallback = error;
+
   const [hoveredCell, setHoveredCell] = useState<{
     platform: string;
     day: string;
@@ -44,7 +66,7 @@ export function VisitorAnalysis() {
     y: number;
   } | null>(null);
 
-  const socialMediaPlatforms = ["Instagram", "Google", "WhatsApp", "Facebook", "TikTok"] as const;
+  const socialMediaPlatforms = d.platforms;
   type Platform = typeof socialMediaPlatforms[number];
 
   const socialMediaIcons: Record<Platform, React.ReactNode> = {
@@ -55,15 +77,9 @@ export function VisitorAnalysis() {
     TikTok: <TikTokIcon size={18} style={{ color: colors.textSecondary }}/>,
   };
 
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const daysOfWeek = d.days;
 
-  const heatmapDataValues: Record<Platform, number[]> = {
-    Instagram: [50, 120, 20, 400, 280, 150, 80],
-    Google: [80, 20, 150, 15, 180, 90, 60],
-    WhatsApp: [300, 10, 120, 160, 20, 70, 40],
-    Facebook: [100, 130, 8, 420, 10, 140, 50],
-    TikTok: [20, 80, 24, 380, 453, 290, 10],
-  };
+  const heatmapDataValues: Record<Platform, number[]> = d.heatmapData;
 
   const heatmapColorLevels = socialMediaPlatforms.map(platform =>
     heatmapDataValues[platform].map(value => {
@@ -103,6 +119,8 @@ export function VisitorAnalysis() {
     setHoveredCell(null);
   };
 
+  if (loading) return <div className="text-gray-400">Loading visitor analysis...</div>;
+
   return (
     <Card
         className="rounded-2xl border p-6 shadow-lg h-full flex flex-col font-[Inter,ui-sans-serif,system-ui] overflow-visible" // FIX 6: Added overflow-visible
@@ -116,6 +134,15 @@ export function VisitorAnalysis() {
             <MoreHorizontal size={18} />
         </button>
       </CardHeader>
+
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
+
       <CardContent className="p-0 flex-grow flex flex-col relative">
         <div className="grid grid-cols-[auto_repeat(7,minmax(0,1fr))] gap-1.5">
           <div></div>

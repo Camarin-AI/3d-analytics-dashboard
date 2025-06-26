@@ -17,6 +17,8 @@ import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { useApiData } from "@/hooks/use-api-data";
+import type { InteractionDurationData } from '@/lib/data-service';
 
 // --- Color Palette (Based on Target Image) ---
 const colors = {
@@ -42,25 +44,26 @@ const colors = {
     // activeDotBorder will be the line color itself
 };
 
-// Initial Data with previous values for trend calculation
-const initialData = [
-  { day: "1", unique: 50, total: 20, prevUnique: 45, prevTotal: 18 },
-  { day: "2", unique: 100, total: 95, prevUnique: 48, prevTotal: 90 }, // "95 seconds" point
-  { day: "3", unique: 30, total: 20, prevUnique: 105, prevTotal: 22 },
-  { day: "4", unique: 20, total: 90, prevUnique: 28, prevTotal: 85 },
-  { day: "5", unique: 120, total: 110, prevUnique: 18, prevTotal: 105 },
-  { day: "6", unique: 70, total: 60, prevUnique: 115, prevTotal: 65 },
-  { day: "7", unique: 10, total: 75, prevUnique: 75, prevTotal: 70 },
-];
+const fallbackData: InteractionDurationData = {
+  data: [
+    { day: "1", unique: 50, total: 20, prevUnique: 45, prevTotal: 18 },
+    { day: "2", unique: 100, total: 95, prevUnique: 48, prevTotal: 90 },
+    { day: "3", unique: 30, total: 20, prevUnique: 105, prevTotal: 22 },
+    { day: "4", unique: 20, total: 90, prevUnique: 28, prevTotal: 85 },
+    { day: "5", unique: 120, total: 110, prevUnique: 18, prevTotal: 105 },
+    { day: "6", unique: 70, total: 60, prevUnique: 115, prevTotal: 65 },
+    { day: "7", unique: 10, total: 75, prevUnique: 75, prevTotal: 70 },
+  ]
+};
 
 // --- Custom Tooltip Content (Top Tooltip) ---
-const CustomInteractionTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const dataPoint = payload[0]; // Data for the primary line being hovered (based on payload order)
+type TooltipProps = { active?: boolean; payload?: any[]; label?: string; data: InteractionDurationData['data'] };
+const CustomInteractionTooltip = ({ active, payload, label, data }: TooltipProps) => {
+  if (active && payload && payload.length && label) {
+    const dataPoint = payload[0];
     const currentValue = dataPoint.value;
-    const seriesNameKey = dataPoint.dataKey as "unique" | "total"; // 'unique' or 'total'
-    const originalDataPoint = initialData.find(d => d.day === label); // Label is the x-axis value (day)
-
+    const seriesNameKey = dataPoint.dataKey as "unique" | "total";
+    const originalDataPoint = data.find((row) => row.day === label);
     let trendPercent = 0;
     if (originalDataPoint) {
       const prevValue = seriesNameKey === 'unique' ? originalDataPoint.prevUnique : originalDataPoint.prevTotal;
@@ -68,10 +71,9 @@ const CustomInteractionTooltip = ({ active, payload, label }: any) => {
         trendPercent = Math.round(((currentValue - prevValue) / prevValue) * 100);
       }
     }
-
     return (
       <div
-        className="rounded-md border shadow-lg p-2 min-w-[130px]" // Slightly smaller padding
+        className="rounded-md border shadow-lg p-2 min-w-[130px]"
         style={{
           backgroundColor: colors.tooltipBg,
           borderColor: colors.tooltipBorder,
@@ -79,8 +81,8 @@ const CustomInteractionTooltip = ({ active, payload, label }: any) => {
         }}
       >
         <p className="text-base font-semibold mb-0.5">{currentValue.toLocaleString()} seconds</p>
-        {trendPercent !== 0 && ( // Only show trend if it's not zero
-            <div className="flex items-center text-[11px]" style={{ color: trendPercent > 0 ? colors.trendUp : colors.trendDown /* Needs colors.trendDown */ }}>
+        {trendPercent !== 0 && (
+            <div className="flex items-center text-[11px]" style={{ color: trendPercent > 0 ? colors.trendUp : colors.trendDown }}>
                 {trendPercent > 0 ? <ArrowUp size={9} className="mr-0.5" /> : <ArrowUp size={9} className="mr-0.5 transform rotate-180" />}
                 {Math.abs(trendPercent)}%
                 <span className="ml-1 text-[9px]" style={{ color: colors.textSecondary }}>over last week</span>
@@ -117,6 +119,11 @@ export function InteractionDuration() {
     to:   new Date(2025, 0, 7),
   });
   const [activeKey, setActiveKey] = useState<"unique" | "total" | null>("unique");
+  const { data, loading, error } = useApiData<InteractionDurationData>({ endpoint: 'interaction-duration', dateRange: range });
+  const d: InteractionDurationData = (error ? fallbackData : (data || fallbackData));
+  const isFallback = error;
+
+  if (loading) return <div className="text-gray-400">Loading interaction duration...</div>;
 
   return (
     <Card
@@ -146,13 +153,21 @@ export function InteractionDuration() {
         </div>
       </CardHeader>
 
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
+
       <CardContent className="p-0 flex-grow flex flex-col">
         <div className="relative h-[280px]"> {/* Adjusted height */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ duration: 0.6, ease: "circOut", delay: 0.1 }} className="h-full" >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={initialData} margin={{ top: 40, right: 10, left: 5, bottom: 5 }}> {/* More top margin, less right/bottom */}
+              <LineChart data={d.data} margin={{ top: 40, right: 10, left: 5, bottom: 5 }}> {/* More top margin, less right/bottom */}
                 <CartesianGrid stroke={colors.gridLine} strokeDasharray="0" horizontal={true} vertical={false} /> {/* Solid horizontal lines */}
                 <XAxis
                   dataKey="day" axisLine={false} tickLine={false}
@@ -166,9 +181,9 @@ export function InteractionDuration() {
                   tickFormatter={v => `${v}s`} width={35}
                 />
                 <Tooltip
-                  position={{ y: -55 }} // Fine-tune Y offset for tooltip above dot
-                  cursor={{ stroke: colors.textPrimary, strokeWidth: 0.5, strokeDasharray: '0' }} // Solid vertical line
-                  content={<CustomInteractionTooltip />}
+                  position={{ y: -55 }}
+                  cursor={{ stroke: colors.textPrimary, strokeWidth: 0.5, strokeDasharray: '0' }}
+                  content={(props) => <CustomInteractionTooltip {...props} data={d.data} />}
                   wrapperStyle={{ zIndex: 50, outline: 'none' }}
                   isAnimationActive={false}
                 />

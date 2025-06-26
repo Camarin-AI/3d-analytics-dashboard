@@ -4,6 +4,8 @@ import { useState } from "react";
 import { MoreHorizontal, ArrowDown, ArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useApiData } from "@/hooks/use-api-data";
+import { ReturnRatesData } from "@/lib/data-service";
 
 // Define data for both sources, matching visual rings
 const data = {
@@ -47,14 +49,28 @@ const innerCircumference = 2 * Math.PI * innerRadius; // Approx 188
 const outerStrokeWidth = 8;
 const innerStrokeWidth = 6; // Keep inner ring slightly thinner than outer
 
-export function ReturnRates() {
-  const [activeView, setActiveView] = useState<"without" | "with">("without");
+interface ReturnRatesProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
 
-  const displayData = data[activeView]; // Data to show in the center
+export function ReturnRates({ dateRange }: ReturnRatesProps) {
+  const { data, loading, error } = useApiData<ReturnRatesData>({ endpoint: 'return-rates', dateRange });
+  const fallback = { without: { rate: 71, trend: "down" }, with: { rate: 45, trend: "up" } };
+  const d = (error ? fallback : (data || fallback));
+  const [activeView, setActiveView] = useState<"without" | "with">("without");
+  if (loading) return <div className="text-gray-400">Loading return rates...</div>;
+
+  // Show a subtle warning if fallback data is being used due to error
+  const isFallback = error;
+
+  const displayData = d[activeView]; // Data to show in the center
 
   // Calculate offsets (these don't change based on activeView)
-  const outerProgressOffset = outerCircumference - (outerCircumference * data.without.rate) / 100;
-  const innerProgressOffset = innerCircumference - (innerCircumference * data.with.rate) / 100;
+  const outerProgressOffset = outerCircumference - (outerCircumference * d.without.rate) / 100;
+  const innerProgressOffset = innerCircumference - (innerCircumference * d.with.rate) / 100;
 
   // Determine active/inactive state for styling
   const isOuterActive = activeView === 'without';
@@ -79,6 +95,14 @@ export function ReturnRates() {
           <MoreHorizontal size={20} />
         </button>
       </CardHeader>
+
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
 
       {/* Card Content */}
       <CardContent className="p-0 flex flex-col flex-grow items-center justify-center">

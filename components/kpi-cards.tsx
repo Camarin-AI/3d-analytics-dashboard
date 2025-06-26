@@ -2,40 +2,67 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-
+import { useApiData } from "@/hooks/use-api-data";
+import { KPIData } from "@/lib/data-service";
+import logger from "@/lib/logger";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-export function KpiCards() {
+interface KpiCardsProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
+
+export function KpiCards({ dateRange }: KpiCardsProps) {
+  const { data: kpiData, loading, error } = useApiData<KPIData>({
+    endpoint: 'kpi',
+    dateRange
+  });
+
+  if (loading) {
+    return <KpiCardsSkeleton />;
+  }
+
+  if (error) {
+    logger.error('KPI Cards error:', error);
+    return <div className="text-red-500">Error loading KPI data</div>;
+  }
+
+  if (!kpiData) {
+    return <div className="text-gray-500">No KPI data available</div>;
+  }
+
   const kpis = [
     {
       title: "Total Visits",
-      value: "54,081",
-      change: 2,
-      trend: "up" as const,
+      value: kpiData.totalVisits.toLocaleString(),
+      change: Math.abs(kpiData.totalVisitsChange),
+      trend: kpiData.totalVisitsChange >= 0 ? "up" as const : "down" as const,
       period: "last week",
       data: generateSparklineData(30, 0.4),
     },
     {
       title: "Conversions",
-      value: "68%",
-      change: 6,
-      trend: "up" as const,
+      value: `${kpiData.conversions}`,
+      change: Math.abs(kpiData.conversionsChange),
+      trend: kpiData.conversionsChange >= 0 ? "up" as const : "down" as const,
       period: "last week",
       data: generateSparklineData(30, 0.6),
     },
     {
       title: "Bounce Rate",
-      value: "36%",
-      change: 6,
-      trend: "down" as const,
+      value: `${kpiData.bounceRate}%`,
+      change: Math.abs(kpiData.bounceRateChange),
+      trend: kpiData.bounceRateChange <= 0 ? "up" as const : "down" as const,
       period: "last week",
       data: generateSparklineData(30, 0.6),
     },
     {
       title: "Visit Duration",
-      value: "1m 2s",
-      change: 6,
-      trend: "up" as const,
+      value: `${Math.floor(kpiData.avgDuration / 60)}m ${kpiData.avgDuration % 60}s`,
+      change: Math.abs(kpiData.avgDurationChange),
+      trend: kpiData.avgDurationChange >= 0 ? "up" as const : "down" as const,
       period: "last week",
       data: generateSparklineData(30, 0.5),
     },
@@ -45,6 +72,20 @@ export function KpiCards() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
       {kpis.map((kpi, idx) => (
         <KpiCard key={idx} {...kpi} />
+      ))}
+    </div>
+  );
+}
+
+function KpiCardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <div key={idx} className="bg-[#121212] rounded p-6 border-black animate-pulse">
+          <div className="h-4 bg-gray-700 rounded w-20 mb-2"></div>
+          <div className="h-8 bg-gray-700 rounded w-16 mb-4"></div>
+          <div className="h-12 bg-gray-700 rounded"></div>
+        </div>
       ))}
     </div>
   );
@@ -97,14 +138,11 @@ function KpiCard({ title, value, change, trend, period, data }: KpiCardProps) {
 
   return (
     <div className="flex items-center justify-between bg-[#121212] rounded p-6 border-black overflow-hidden">
-      {/* Left: Title + Value */}
       <div>
-        {/* lighter gray title */}
         <p className="text-xs font-light text-gray-400">{title}</p>
         <p className="mt-1 text-3xl font-light text-white">{value}</p>
       </div>
 
-      {/* Right: Sparkline + Change badge */}
       <div className="relative w-32 h-12 flex-shrink-0">
         <Chart
           options={options}
@@ -114,7 +152,6 @@ function KpiCard({ title, value, change, trend, period, data }: KpiCardProps) {
           height={48}
         />
 
-        {/* top-right badge */}
         <div className="absolute top-1 right-2 flex flex-col items-end pointer-events-none">
           <div className="flex items-center gap-1">
             {isUp ? (

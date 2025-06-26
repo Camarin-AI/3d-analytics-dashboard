@@ -12,6 +12,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ShimmerButton } from "@/components/magicui/shimmer-button"; // Ensure this path is correct
+import { useApiData } from "@/hooks/use-api-data";
+import { TotalSalesData } from "@/lib/data-service";
 
 // --- Color Palette (Strictly from Target Image, with refinements) ---
 const colors = {
@@ -47,21 +49,31 @@ const colors = {
   legendDotBorder: "rgba(255, 255, 255, 0.3)",
 };
 
-export function TotalSales() {
-  const [dateRange] = useState({
-    from: new Date(2025, 0, 1),
-    to: new Date(2025, 0, 7),
-  });
+interface TotalSalesProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
 
-  const salesData = [
-    { day: "Today", socialMedia: 33, redirectLinks: 37, directLogin: 30 },
-    { day: "Jan 4", socialMedia: 30, redirectLinks: 40, directLogin: 30 },
-    { day: "Jan 3", socialMedia: 38, redirectLinks: 28, directLogin: 34 },
-  ];
+export function TotalSales({ dateRange }: TotalSalesProps) {
+  const { data, loading, error } = useApiData<TotalSalesData>({ endpoint: 'total-sales', dateRange });
+  // Fallback data
+  const fallback = {
+    totalSales: 35248,
+    previousWeekSales: 15230,
+    progressPercent: 65,
+    salesData: [
+      { day: "Today", socialMedia: 33, redirectLinks: 37, directLogin: 30 },
+      { day: "Jan 4", socialMedia: 30, redirectLinks: 40, directLogin: 30 },
+      { day: "Jan 3", socialMedia: 38, redirectLinks: 28, directLogin: 34 },
+    ],
+  };
+  const d = (error ? fallback : (data || fallback));
+  if (loading) return <div className="text-gray-400">Loading total sales...</div>;
 
-  const totalSales = 35248;
-  const previousWeekSales = 15230;
-  const progressPercent = 65; // Visually set
+  // Show a subtle warning if fallback data is being used due to error
+  const isFallback = error;
 
   const legendData = [
     { label: "Social Media", color: colors.barSocial },
@@ -104,6 +116,14 @@ export function TotalSales() {
         </div>
       </CardHeader>
 
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
+
       {/* Card Content */}
       <CardContent className="p-0 space-y-5">
         {/* Sales Figure and Badge */}
@@ -113,7 +133,7 @@ export function TotalSales() {
             style={{ background: `radial-gradient(${colors.progressBarGlow}, transparent 65%)`, filter: "blur(18px)", zIndex: 0 }} />
           <div className="flex items-end justify-between">
             <h3 className="text-3xl font-semibold font-sans leading-none tracking-tight" style={{ color: colors.textPrimary }}> {/* Increased font weight, adjusted tracking */}
-              INR {totalSales.toLocaleString("en-IN")}
+              INR {d.totalSales.toLocaleString("en-IN")}
             </h3>
             <ShimmerButton
               className="relative z-10 inline-flex items-center justify-center rounded-full border text-xs font-medium px-3 py-1"
@@ -137,22 +157,22 @@ export function TotalSales() {
               className="h-full rounded-full relative flex items-center" // Added relative and flex for segment lines
               style={{ backgroundColor: colors.progressBarFill }}
               initial={{ width: "0%" }}
-              animate={{ width: `${progressPercent}%` }}
+              animate={{ width: `${d.progressPercent}%` }}
               transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
             >
                 {/* Simulate subtle segment lines within the white bar if progressPercent > 0 */}
                 {/* These are decorative and approximate the look */}
-                {progressPercent > 25 && <div className="absolute left-[25%] top-0 bottom-0 w-px" style={{backgroundColor: colors.progressBarSegmentLine}}></div>}
-                {progressPercent > 50 && <div className="absolute left-[50%] top-0 bottom-0 w-px" style={{backgroundColor: colors.progressBarSegmentLine}}></div>}
-                {progressPercent > 75 && <div className="absolute left-[75%] top-0 bottom-0 w-px" style={{backgroundColor: colors.progressBarSegmentLine}}></div>}
+                {d.progressPercent > 25 && <div className="absolute left-[25%] top-0 bottom-0 w-px" style={{backgroundColor: colors.progressBarSegmentLine}}></div>}
+                {d.progressPercent > 50 && <div className="absolute left-[50%] top-0 bottom-0 w-px" style={{backgroundColor: colors.progressBarSegmentLine}}></div>}
+                {d.progressPercent > 75 && <div className="absolute left-[75%] top-0 bottom-0 w-px" style={{backgroundColor: colors.progressBarSegmentLine}}></div>}
             </motion.div>
 
             {/* Progress Bar Glow */}
             <motion.div
               className="absolute top-1/2 -translate-y-1/2 h-[120%] w-5 rounded-full pointer-events-none"
-              style={{ backgroundColor: colors.progressBarGlow, filter: 'blur(5px)', left: `${progressPercent}%`, transform: 'translate(-70%, -50%)', opacity: 0.9 }}
+              style={{ backgroundColor: colors.progressBarGlow, filter: 'blur(5px)', left: `${d.progressPercent}%`, transform: 'translate(-70%, -50%)', opacity: 0.9 }}
               initial={{ left: "0%", opacity: 0 }}
-              animate={{ left: `${progressPercent}%`, opacity: 0.9 }}
+              animate={{ left: `${d.progressPercent}%`, opacity: 0.9 }}
               transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }} />
           </div>
           
@@ -164,13 +184,13 @@ export function TotalSales() {
           <hr className="border-t" style={{ borderColor: colors.separatorLine }} />
           <div className="flex justify-between text-base font-semibold pt-1.5 tracking-tight" style={{ color: colors.textPrimary }}> {/* Increased font size, weight, adjusted tracking */}
             <span className="font-medium text-sm" style={{ color: colors.textSubtle }}>Previous Week</span> {/* Adjusted this label style slightly */}
-            <span>INR {previousWeekSales.toLocaleString("en-IN")}</span>
+            <span>INR {d.previousWeekSales.toLocaleString("en-IN")}</span>
           </div>
         </div>
 
         {/* Daily Breakdown Bars */}
         <div className="space-y-2.5 pt-3">
-          {salesData.map((item, index) => {
+          {d.salesData.map((item, index) => {
             const total = item.socialMedia + item.redirectLinks + item.directLogin;
             const socialPercent = total === 0 ? 0 : (item.socialMedia / total) * 100;
             const redirectPercent = total === 0 ? 0 : (item.redirectLinks / total) * 100;

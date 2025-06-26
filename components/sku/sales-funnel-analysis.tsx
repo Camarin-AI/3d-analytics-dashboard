@@ -9,6 +9,8 @@ import { Calendar, MoreHorizontal } from "lucide-react"; // Keep MoreHorizontal
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import Image from "next/image"; // Import Image for trend arrows
+import { useApiData } from "@/hooks/use-api-data";
+import type { SalesFunnelData } from '@/lib/data-service';
 
 // --- Color Palette (Based on Target Image Analysis) ---
 const colors = {
@@ -52,25 +54,40 @@ const funnelData = [
 // --- Bottom Stage Labels (4 labels for 5 stages) ---
 const stageLabels = ["Impressions", "Interactions", "Add to Cart", "Conversions"];
 
+const fallbackData: SalesFunnelData = {
+  weeklyRevenue: 8459,
+  stages: [
+    { value: "6.80k", percent: 100, change: null, color: colors.funnelStage1 },
+    { value: "6.80k", percent: 71, change: -6, color: colors.funnelStage2 },
+    { value: "5.75k", percent: 43, change: 2, color: colors.funnelStage3 },
+    { value: "4.5k", percent: 27, change: 3, color: colors.funnelStage4 },
+    { value: "3.5k", percent: 10, change: 3, color: colors.funnelStage5 }
+  ],
+  unitsSold: 500,
+};
+
 // --- Component ---
 export function SalesFunnelAnalysis() {
     const [dateRange] = useState({
         from: new Date(2025, 0, 1),
         to: new Date(2025, 0, 7),
     });
+    const { data, loading, error } = useApiData<SalesFunnelData>({ endpoint: 'sales-funnel', dateRange });
+    const d: SalesFunnelData = (error ? fallbackData : (data || fallbackData));
+    const isFallback = error;
 
     // --- SVG Funnel Path Calculations ---
     const svgWidth = 1000;
     const svgHeight = 150; // Adjusted height for better vertical proportion
-    const numStages = funnelData.length;
+    const numStages = d.stages.length;
     const stageWidth = svgWidth / numStages;
     const maxStageHeight = 130; // Max height within SVG viewbox
     const topPadding = 10;
     const curveFactor = 0.45; // Fine-tuned curve factor
 
     const getPathData = (index: number) => {
-        const stage = funnelData[index];
-        const prevStagePercent = index === 0 ? 100 : funnelData[index - 1].percent;
+        const stage = d.stages[index];
+        const prevStagePercent = index === 0 ? 100 : d.stages[index - 1].percent;
 
         // Use percentages directly relative to max height for visual accuracy
         const currentHeight = maxStageHeight * (stage.percent / 100);
@@ -93,13 +110,15 @@ export function SalesFunnelAnalysis() {
         }
 
         // Subsequent stages use curves
-        const d = `M ${startX},${startYTop}` +
+        const dPath = `M ${startX},${startYTop}` +
                   ` C ${cp1X},${startYTop} ${cp2X},${endYTop} ${endX},${endYTop}` +
                   ` L ${endX},${endYBottom}` +
                   ` C ${cp2X},${endYBottom} ${cp1X},${startYBottom} ${startX},${startYBottom}` +
                   ` Z`;
-        return d;
+        return dPath;
     };
+
+    if (loading) return <div className="text-gray-400">Loading sales funnel analysis...</div>;
 
     return (
         <Card
@@ -122,12 +141,20 @@ export function SalesFunnelAnalysis() {
                 </div>
             </CardHeader>
 
+            {/* Subtle warning if fallback is used */}
+            {isFallback && (
+              <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+                <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                Offline mode: showing fallback data
+              </div>
+            )}
+
             {/* Content */}
             <CardContent className="p-0 flex-grow flex flex-col">
                 {/* Weekly Revenue */}
                 <div className="mb-3">
                     <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>Weekly Revenue</p>
-                    <p className="text-xl font-semibold" style={{ color: colors.textPrimary }}>INR 8,459</p>
+                    <p className="text-xl font-semibold" style={{ color: colors.textPrimary }}>INR {d.weeklyRevenue.toLocaleString("en-IN")}</p>
                 </div>
 
                 {/* Funnel Area */}
@@ -135,7 +162,7 @@ export function SalesFunnelAnalysis() {
 
                     {/* Top Labels (Values & Trends) - Refined Positioning */}
                     <div className="absolute top-0 left-0 right-0 flex items-start h-8 z-20 px-[1%]"> {/* Add slight horizontal padding */}
-                        {funnelData.map((stage, index) => (
+                        {d.stages.map((stage, index) => (
                             <div key={`label-group-${index}`}
                                  className="absolute top-0 flex items-center"
                                  // Position each group starting slightly before its stage visually
@@ -172,7 +199,7 @@ export function SalesFunnelAnalysis() {
                         preserveAspectRatio="none"
                     >
                         {/* Render Funnel Stages */}
-                        {funnelData.map((stage, index) => (
+                        {d.stages.map((stage, index) => (
                             <motion.path
                                 key={`path-${index}`}
                                 d={getPathData(index)}
@@ -184,7 +211,7 @@ export function SalesFunnelAnalysis() {
                         ))}
 
                         {/* Vertical Divider Lines (Positioned at the end of each stage except last) */}
-                        {funnelData.slice(0, numStages - 1).map((_, index) => {
+                        {d.stages.slice(0, numStages - 1).map((_, index) => {
                             const x = (index + 1) * stageWidth;
                              // Extend slightly beyond SVG viewbox for visual effect if needed, or use container height
                             const y1 = -5; // Start slightly above
@@ -202,7 +229,7 @@ export function SalesFunnelAnalysis() {
                         })}
 
                          {/* Percentage Labels Inside Funnel */}
-                         {funnelData.map((stage, index) => {
+                         {d.stages.map((stage, index) => {
                              const stageHeight = maxStageHeight * (stage.percent / 100);
                              const stageCenterY = topPadding + (maxStageHeight - stageHeight) / 2 + stageHeight / 2;
                              const stageCenterX = (index + 0.5) * stageWidth;
@@ -228,7 +255,7 @@ export function SalesFunnelAnalysis() {
                     {/* Bottom Right: # Units Sold */}
                     <div className="absolute bottom-1 right-4 text-right z-10"> {/* Position lower */}
                         <p className="text-[11px]" style={{ color: colors.textMuted }}># Units Sold</p>
-                        <p className="text-base font-semibold" style={{ color: colors.textPrimary }}>500</p>
+                        <p className="text-base font-semibold" style={{ color: colors.textPrimary }}>{d.unitsSold}</p>
                     </div>
                 </div>
 

@@ -3,16 +3,15 @@
 import { MoreHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useApiData } from "@/hooks/use-api-data";
+import { ConversionRatesData } from "@/lib/data-service";
 
-// Sample data structure matching the visual groups
-const chartData = [
-  { withEmbeds: 30, withoutEmbeds: 20 },
-  { withEmbeds: 48, withoutEmbeds: 38 },
-  { withEmbeds: 50, withoutEmbeds: 48 },
-  { withEmbeds: 35, withoutEmbeds: 34 },
-  { withEmbeds: 40, withoutEmbeds: 33 },
-  { withEmbeds: 20, withoutEmbeds: 17 },
-];
+interface ConversionRatesProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
 
 // Define colors based on the image analysis
 const colors = {
@@ -30,7 +29,22 @@ const colors = {
 const MAX_VALUE = 80; 
 const Y_AXIS_LABELS = [80, 40, 20, 0];
 
-export function ConversionRates() {
+export function ConversionRates({ dateRange }: ConversionRatesProps) {
+  const { data, loading, error } = useApiData<ConversionRatesData>({ endpoint: 'conversion-rates', dateRange });
+  const fallback = { chartData: [
+    { withEmbeds: 30, withoutEmbeds: 20 },
+    { withEmbeds: 48, withoutEmbeds: 38 },
+    { withEmbeds: 50, withoutEmbeds: 48 },
+    { withEmbeds: 35, withoutEmbeds: 34 },
+    { withEmbeds: 40, withoutEmbeds: 33 },
+    { withEmbeds: 20, withoutEmbeds: 17 },
+  ]};
+  const d = (error ? fallback : (data || fallback));
+  if (loading) return <div className="text-gray-400">Loading conversion rates...</div>;
+
+  // Show a subtle warning if fallback data is being used due to error
+  const isFallback = error;
+
   return (
     <Card
       className="rounded-2xl border p-6 shadow-xl h-full flex flex-col"
@@ -48,6 +62,14 @@ export function ConversionRates() {
           <MoreHorizontal size={20} />
         </button>
       </CardHeader>
+
+      {/* Subtle warning if fallback is used */}
+      {isFallback && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-yellow-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          Offline mode: showing fallback data
+        </div>
+      )}
 
       <CardContent className="p-0 flex-grow flex flex-col">
         {/* FIX 4: Added min-h-[250px] to chart area wrapper and responsive gap/bar width */}
@@ -79,7 +101,7 @@ export function ConversionRates() {
                 />
             </div>
 
-            {chartData.map((group, index) => (
+            {d.chartData.map((group, index) => (
               <div key={index} className="flex gap-1 sm:gap-1.5 items-end h-full relative z-10"> 
                 <motion.div
                   className="w-2.5 md:w-3 lg:w-4 rounded-t-md" // Responsive bar width

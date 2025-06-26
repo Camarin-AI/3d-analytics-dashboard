@@ -2,25 +2,50 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
+import { useApiData } from "@/hooks/use-api-data"
+import { RegionData } from "@/lib/data-service"
 
-export function RegionGauges() {
-  const regions = [
-    { name: "India", value: 30, color: "#4CD8E5" },
-    { name: "United Kingdom", value: 20, color: "#4CD8E5" },
-    { name: "Canada", value: 10, color: "#4CD8E5" },
-    { name: "Australia", value: 15, color: "#8A70D6" },
-    { name: "Spain", value: 15, color: "#8A70D6" },
-    { name: "Europe", value: 10, color: "#8A70D6" },
-  ]
+const regions = [
+  { name: "India", value: 30, color: "#4CD8E5" },
+  { name: "United Kingdom", value: 20, color: "#4CD8E5" },
+  { name: "Canada", value: 10, color: "#4CD8E5" },
+  { name: "Australia", value: 15, color: "#8A70D6" },
+  { name: "Spain", value: 15, color: "#8A70D6" },
+  { name: "Europe", value: 10, color: "#8A70D6" },
+]
+
+interface RegionGaugesProps {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+}
+
+export function RegionGauges({ dateRange }: RegionGaugesProps) {
+  const { data, loading, error } = useApiData<RegionData>({ endpoint: 'region-data', dateRange });
+  const regionsData = data?.regions || [];
 
   return (
     <Card className="bg-[#1A1A1A] border-[#FFFFFF88] text-white">
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10">
-          {regions.map((region) => (
-            <RegionGauge key={region.name} region={region} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-gray-400">Loading region gauges...</div>
+        ) : error ? (
+          <>
+            <div className="text-yellow-400 mb-4">Showing fallback data (offline mode)</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10">
+              {regions.map((region) => (
+                <RegionGauge key={region.name} region={region} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10">
+            {regionsData.map((region) => (
+              <RegionGauge key={region.name} region={region} />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )

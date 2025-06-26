@@ -1,0 +1,9 @@
+
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'camarin-dashboard'
+    static_configs:
+      # Target the 'app' service inside the Docker network
+      - targets: ['app:3000'] 
